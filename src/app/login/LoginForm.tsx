@@ -12,7 +12,9 @@ export default function LoginForm({ linkFailed }: { linkFailed: boolean }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(
-    linkFailed ? "That verification link is invalid or has expired." : ""
+    linkFailed
+  ? "We couldn't sign you in from that link. If you already clicked it, your email is probably verified. Just log in below."
+  : ""
   );
 
   async function handleSubmit(e: React.FormEvent) {
