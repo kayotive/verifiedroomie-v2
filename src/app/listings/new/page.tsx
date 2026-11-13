@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import LocationPicker from "./LocationPicker";
 
 const inputClass =
   "w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none";
@@ -67,6 +68,7 @@ export default function NewListingPage() {
     area: "",
   });
   const [files, setFiles] = useState<Record<string, File>>({});
+  const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -104,6 +106,10 @@ export default function NewListingPage() {
       setError(`Please add photos for: ${missing.map((m) => m.label).join(", ")}.`);
       return;
     }
+    if (!pin) {
+      setError("Please drop a pin on the map to show where your apartment is.");
+      return;
+    }
 
     setLoading(true);
 
@@ -127,6 +133,8 @@ export default function NewListingPage() {
         house_rules: form.houseRules,
         place_name: form.placeName,
         area: form.area,
+        latitude: pin.lat,
+        longitude: pin.lng,
         status: "draft",
       })
       .select("id")
@@ -222,9 +230,19 @@ export default function NewListingPage() {
         <div>
           <label className={labelClass}>Area and City</label>
           <input name="area" required placeholder="Jikwoyi, Abuja" value={form.area} onChange={update} className={inputClass} />
-          <p className="mt-1 text-xs text-gray-500">The map pin comes in the next update. This cannot be changed after you publish.</p>
         </div>
 
+        <div>
+          <label className={labelClass}>Pin your apartment on the map</label>
+          <LocationPicker onChange={setPin} />
+          {pin ? (
+            <p className="mt-1 text-xs text-emerald-700">
+              Pin placed. The location is locked once you publish.
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-gray-500">No pin placed yet.</p>
+          )}
+        </div>
         <div>
           <label className={labelClass}>Short Description</label>
           <textarea name="description" required rows={3} placeholder="Looking for a neat, responsible roommate." value={form.description} onChange={update} className={inputClass} />
