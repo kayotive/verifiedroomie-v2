@@ -26,6 +26,7 @@ export default async function DashboardPage() {
     .single();
 
   if (!profile?.user_type) redirect("/onboarding");
+  if (profile.user_type === "seeker") redirect("/feed");
 
   const isOwner = profile.user_type === "owner";
 
