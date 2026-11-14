@@ -6,11 +6,11 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function ConnectButton({
   receiverId,
-  listingId,
+  listingId = null,
   points,
 }: {
   receiverId: string;
-  listingId: string;
+  listingId?: string | null;
   points: number;
 }) {
   const router = useRouter();

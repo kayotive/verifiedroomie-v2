@@ -62,6 +62,11 @@ export default async function FeedPage({
     .single();
   if (!me?.user_type) redirect("/onboarding");
   if (me.user_type === "owner") redirect("/dashboard");
+  const { count: pending } = await supabase
+    .from("connections")
+    .select("id", { count: "exact", head: true })
+    .eq("receiver_id", user.id)
+    .eq("status", "pending");
 
   // Read and clean the search and filter values
   const q = (sp.q ?? "").replace(/[,()%*\\".:]/g, " ").trim();
@@ -121,8 +126,8 @@ export default async function FeedPage({
       </header>
       <div className="mb-4 flex items-center justify-between text-sm">
         <span className="font-medium text-gray-700">🎟 Connect Points: {me.connect_points}</span>
-        <Link href="/requests" className="font-semibold text-emerald-700">
-          Requests
+         <Link href="/requests" className="font-semibold text-emerald-700">
+          Requests{pending ? ` (${pending})` : ""}
         </Link>
       </div>
 

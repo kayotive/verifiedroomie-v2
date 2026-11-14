@@ -70,6 +70,12 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
+      <Link
+        href="/people"
+        className="w-full rounded-xl border border-emerald-600 px-5 py-3 text-center font-semibold text-emerald-700 hover:bg-emerald-50"
+      >
+        👥 Browse people looking for apartments
+      </Link>
       {listings && listings.length > 0 && (
         <div className="w-full text-left">
           <h2 className="mb-2 mt-4 text-lg font-semibold text-gray-900">Your listings</h2>
