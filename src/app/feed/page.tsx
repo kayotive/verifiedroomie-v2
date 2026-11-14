@@ -57,7 +57,7 @@ export default async function FeedPage({
 
   const { data: me } = await supabase
     .from("profiles")
-    .select("user_type")
+    .select("user_type, connect_points")
     .eq("id", user.id)
     .single();
   if (!me?.user_type) redirect("/onboarding");
@@ -115,10 +115,16 @@ export default async function FeedPage({
 
   return (
     <main className="mx-auto max-w-md px-4 py-6">
-      <header className="mb-4 flex items-center justify-between">
+       <header className="mb-2 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-emerald-700">VerifiedRoomie</h1>
         <LogoutButton />
       </header>
+      <div className="mb-4 flex items-center justify-between text-sm">
+        <span className="font-medium text-gray-700">🎟 Connect Points: {me.connect_points}</span>
+        <Link href="/requests" className="font-semibold text-emerald-700">
+          Requests
+        </Link>
+      </div>
 
       <form method="get" className="mb-5 flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-3">
         <input
@@ -229,6 +235,12 @@ export default async function FeedPage({
                     </span>
                   ))}
                 </div>
+                <Link
+                  href={`/listings/${l.id}`}
+                  className="mt-3 block rounded-xl bg-emerald-600 py-2 text-center font-semibold text-white hover:bg-emerald-700"
+                >
+                  View Details
+                </Link>
               </div>
             </li>
           );

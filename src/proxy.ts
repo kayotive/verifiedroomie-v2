@@ -30,13 +30,13 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isProtected =
-    path.startsWith("/dashboard") ||
-    path.startsWith("/onboarding") ||
-    path.startsWith("/listings") ||
-    path.startsWith("/feed");
+  const isPublic =
+    path === "/" ||
+    path === "/login" ||
+    path === "/register" ||
+    path.startsWith("/auth/");
 
-  if (!user && isProtected) {
+  if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
