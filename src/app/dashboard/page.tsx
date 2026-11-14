@@ -21,7 +21,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, user_type, avatar_url, connect_points")
+    .select("full_name, user_type, avatar_url, connect_points, is_admin, id_verified")
     .eq("id", user.id)
     .single();
 
@@ -53,7 +53,10 @@ export default async function DashboardPage() {
       <h1 className="text-3xl font-bold text-gray-900">
         Welcome, {profile.full_name || "friend"}!
       </h1>
-      <p className="text-sm text-gray-600">🎟 Connect Points: {profile.connect_points}</p>
+      <p className="text-sm text-gray-600">
+        🎟 Connect Points: {profile.connect_points}
+        {profile.id_verified ? " · 🪪 ID verified" : ""}
+      </p>
 
       <div className="flex gap-3">
         <Link
@@ -76,6 +79,18 @@ export default async function DashboardPage() {
       >
         👥 Browse people looking for apartments
       </Link>
+
+      {!profile.id_verified && (
+        <Link href="/verify" className="font-semibold text-emerald-700">
+          🪪 Verify your ID
+        </Link>
+      )}
+      {profile.is_admin && (
+        <Link href="/admin/verifications" className="font-semibold text-emerald-700">
+          🛠 Admin: verifications
+        </Link>
+      )}
+
       {listings && listings.length > 0 && (
         <div className="w-full text-left">
           <h2 className="mb-2 mt-4 text-lg font-semibold text-gray-900">Your listings</h2>

@@ -62,6 +62,7 @@ export default async function FeedPage({
     .single();
   if (!me?.user_type) redirect("/onboarding");
   if (me.user_type === "owner") redirect("/dashboard");
+
   const { count: pending } = await supabase
     .from("connections")
     .select("id", { count: "exact", head: true })
@@ -120,15 +121,21 @@ export default async function FeedPage({
 
   return (
     <main className="mx-auto max-w-md px-4 py-6">
-       <header className="mb-2 flex items-center justify-between">
+      <header className="mb-2 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-emerald-700">VerifiedRoomie</h1>
         <LogoutButton />
       </header>
+
       <div className="mb-4 flex items-center justify-between text-sm">
         <span className="font-medium text-gray-700">🎟 Connect Points: {me.connect_points}</span>
-         <Link href="/requests" className="font-semibold text-emerald-700">
-          Requests{pending ? ` (${pending})` : ""}
-        </Link>
+        <div className="flex gap-4">
+          <Link href="/verify" className="font-semibold text-emerald-700">
+            Verify ID
+          </Link>
+          <Link href="/requests" className="font-semibold text-emerald-700">
+            Requests{pending ? ` (${pending})` : ""}
+          </Link>
+        </div>
       </div>
 
       <form method="get" className="mb-5 flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-3">
