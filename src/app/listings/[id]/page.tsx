@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { whatsappLink } from "@/lib/phone";
 import ConnectButton from "./ConnectButton";
 import ListingMap from "./ListingMap";
+import ReportBlock from "@/components/ReportBlock";
 
 const typeLabels: Record<string, string> = {
   self_contained: "Self-contained",
@@ -276,6 +277,9 @@ export default async function ListingDetailsPage({
           <p className="text-center text-gray-700">This request was declined.</p>
         )}
       </section>
+      {!isMine && (
+        <ReportBlock userId={l.owner_id} listingId={l.id} isListing afterBlockHref="/feed" />
+      )}
     </main>
   );
 }

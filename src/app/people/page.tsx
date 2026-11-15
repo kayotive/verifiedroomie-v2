@@ -75,6 +75,12 @@ export default async function PeoplePage({
   if (smoking) query = query.eq("smoking", smoking);
   if (!Number.isNaN(maxAge)) query = query.gte("birth_year", year - maxAge);
   if (!Number.isNaN(minAge)) query = query.lte("birth_year", year - minAge);
+  query = query.eq("is_suspended", false);
+  const { data: hiddenData } = await supabase.rpc("hidden_user_ids");
+  const hidden = (hiddenData ?? []) as string[];
+  if (hidden.length > 0) {
+    query = query.not("id", "in", `(${hidden.join(",")})`);
+  }
 
   const { data, error } = await query;
   const rows = (data ?? []) as Person[];

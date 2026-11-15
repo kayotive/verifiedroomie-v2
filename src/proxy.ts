@@ -42,6 +42,21 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Suspended accounts can only see the /suspended page
+  if (user && !isPublic && path !== "/suspended") {
+    const { data: me } = await supabase
+      .from("profiles")
+      .select("is_suspended")
+      .eq("id", user.id)
+      .single();
+
+    if (me?.is_suspended) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/suspended";
+      return NextResponse.redirect(url);
+    }
+  }
+
   return response;
 }
 
@@ -49,4 +64,4 @@ export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
-}
+};

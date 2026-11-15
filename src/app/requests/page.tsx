@@ -70,7 +70,9 @@ export default async function RequestsPage() {
     )
     .order("created_at", { ascending: false });
 
-  const rows = (data ?? []) as unknown as Row[];
+  const rows = ((data ?? []) as unknown as Row[]).filter(
+    (r) => r.requester && r.receiver
+  );
   const incoming = rows.filter((r) => r.receiver_id === user.id && r.status === "pending");
   const accepted = rows.filter((r) => r.status === "accepted");
   const sent = rows.filter((r) => r.requester_id === user.id && r.status !== "accepted");
@@ -151,6 +153,11 @@ export default async function RequestsPage() {
           </ul>
         </>
       )}
+      <div className="mt-8 text-center">
+        <Link href="/blocked" className="text-sm font-semibold text-gray-500">
+          🚫 Blocked users
+        </Link>
+      </div>
     </main>
   );
 }

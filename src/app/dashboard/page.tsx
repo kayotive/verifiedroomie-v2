@@ -86,9 +86,14 @@ export default async function DashboardPage() {
         </Link>
       )}
       {profile.is_admin && (
-        <Link href="/admin/verifications" className="font-semibold text-emerald-700">
-          🛠 Admin: verifications
-        </Link>
+        <div className="flex gap-4">
+          <Link href="/admin/verifications" className="font-semibold text-emerald-700">
+            🛠 Verifications
+          </Link>
+          <Link href="/admin/reports" className="font-semibold text-emerald-700">
+            🚩 Reports
+          </Link>
+        </div>
       )}
 
       {listings && listings.length > 0 && (

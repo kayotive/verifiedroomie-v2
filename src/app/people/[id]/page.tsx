@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { whatsappLink } from "@/lib/phone";
 import ConnectButton from "../../listings/[id]/ConnectButton";
+import ReportBlock from "@/components/ReportBlock";
 
 const genderLabels: Record<string, string> = { male: "Male", female: "Female", other: "Other" };
 const occupationLabels: Record<string, string> = {
@@ -36,12 +37,21 @@ export default async function PersonPage({
   const { data: person } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, id_verified, phone_verified, user_type"
+      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, id_verified, phone_verified, user_type, is_suspended"
     )
     .eq("id", id)
     .maybeSingle();
 
-  if (!person || person.user_type !== "seeker") notFound();
+ const { data: hiddenData } = await supabase.rpc("hidden_user_ids");
+  const hidden = (hiddenData ?? []) as string[];
+  if (
+    !person ||
+    person.user_type !== "seeker" ||
+    person.is_suspended ||
+    hidden.includes(person.id)
+  ) {
+    notFound();
+  }
 
   const { data: connection } = await supabase
     .from("connections")
@@ -140,6 +150,7 @@ export default async function PersonPage({
           <p className="text-center text-gray-700">This request was declined.</p>
         )}
       </section>
+      <ReportBlock userId={person.id} afterBlockHref="/people" />
     </main>
   );
 }
