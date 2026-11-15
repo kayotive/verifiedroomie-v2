@@ -13,8 +13,8 @@ export default function LoginForm({ linkFailed }: { linkFailed: boolean }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(
     linkFailed
-  ? "We couldn't sign you in from that link. If you already clicked it, your email is probably verified. Just log in below."
-  : ""
+      ? "We couldn't sign you in from that link. If you already clicked it, your email is probably verified. Just log in below."
+      : ""
   );
 
   async function handleSubmit(e: React.FormEvent) {
@@ -67,6 +67,9 @@ export default function LoginForm({ linkFailed }: { linkFailed: boolean }) {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none"
           />
+          <Link href="/forgot-password" className="mt-1 inline-block text-sm font-semibold text-emerald-700">
+            Forgot your password?
+          </Link>
         </div>
 
         {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}

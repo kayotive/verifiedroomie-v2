@@ -8,14 +8,19 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") as EmailOtpType | null;
   const code = searchParams.get("code");
 
+  // Where to go after the link works (only pages inside our own site)
+  const nextParam = searchParams.get("next") ?? "/dashboard";
+  const next =
+    nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/dashboard";
+
   const supabase = await createClient();
 
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash });
-    if (!error) return NextResponse.redirect(`${origin}/dashboard`);
+    if (!error) return NextResponse.redirect(`${origin}${next}`);
   } else if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}/dashboard`);
+    if (!error) return NextResponse.redirect(`${origin}${next}`);
   }
 
   return NextResponse.redirect(`${origin}/login?error=verification_failed`);

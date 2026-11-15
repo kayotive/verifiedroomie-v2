@@ -129,6 +129,9 @@ export default async function FeedPage({
       <div className="mb-4 flex items-center justify-between text-sm">
         <span className="font-medium text-gray-700">🎟 Connect Points: {me.connect_points}</span>
         <div className="flex gap-4">
+          <Link href="/profile" className="font-semibold text-emerald-700">
+            Profile
+          </Link>
           <Link href="/verify" className="font-semibold text-emerald-700">
             Verify ID
           </Link>

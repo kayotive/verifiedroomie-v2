@@ -80,6 +80,9 @@ export default async function DashboardPage() {
         👥 Browse people looking for apartments
       </Link>
 
+      <Link href="/profile" className="font-semibold text-emerald-700">
+        👤 My profile
+      </Link>
       {!profile.id_verified && (
         <Link href="/verify" className="font-semibold text-emerald-700">
           🪪 Verify your ID
