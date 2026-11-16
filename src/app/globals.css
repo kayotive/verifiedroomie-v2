@@ -1,26 +1,85 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Brand blues, taken from the logo */
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #5b9cf8;
+  --color-brand-500: #2f7af3;
+  --color-brand-600: #1f6bf0;
+  --color-brand-700: #1553c4;
+  --color-brand-800: #17449a;
+  --color-brand-900: #183b7a;
+  --color-brand-950: #0f2551;
+
+  /* Until each page is restyled (9B), existing "emerald" classes render in brand blue */
+  --color-emerald-50: #eff6ff;
+  --color-emerald-100: #dbeafe;
+  --color-emerald-200: #bfdbfe;
+  --color-emerald-300: #93c5fd;
+  --color-emerald-400: #5b9cf8;
+  --color-emerald-500: #2f7af3;
+  --color-emerald-600: #1f6bf0;
+  --color-emerald-700: #1553c4;
+  --color-emerald-800: #17449a;
+  --color-emerald-900: #183b7a;
+  --color-emerald-950: #0f2551;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.05), 0 10px 30px -12px rgb(31 107 240 / 0.18);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: #e2e8f0;
+  }
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+  body {
+    background: #ffffff;
+    color: #0f172a;
+  }
+  :focus-visible {
+    outline: 2px solid #1f6bf0;
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* One entrance moment on the homepage hero */
+@keyframes vr-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.vr-rise {
+  animation: vr-rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.vr-rise-2 {
+  animation-delay: 0.12s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .vr-rise {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
 }
