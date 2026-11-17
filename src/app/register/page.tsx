@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import PasswordInput from "@/components/PasswordInput";
 
 const inputClass =
   "w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none";
@@ -79,7 +80,7 @@ export default function RegisterPage() {
 
   if (done) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
+      <main className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-4 px-6 text-center">
         <h1 className="text-3xl font-bold text-gray-900">Check your email</h1>
         <p className="max-w-sm text-gray-600">
           We sent a verification link to <strong>{form.email}</strong>. Click
@@ -93,7 +94,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-10">
+    <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-col justify-center px-6 py-10">
       <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
       <p className="mb-6 mt-1 text-gray-600">
         Find Your Room. Find Your People. Feel at Home.
@@ -117,8 +118,8 @@ export default function RegisterPage() {
 
         <div>
           <label className={labelClass}>Password</label>
-          <input name="password" type="password" required minLength={8} value={form.password} onChange={update} className={inputClass} />
-          <p className="mt-1 text-xs text-gray-500">At least 8 characters.</p>
+          <PasswordInput name="password" required minLength={8} value={form.password} onChange={update} className={inputClass} />
+          <p className="mt-1 text-xs text-gray-500">At least 8 characters. Tap the eye to check what you typed.</p>
         </div>
 
         <div>

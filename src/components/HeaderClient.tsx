@@ -61,7 +61,9 @@ export default function HeaderClient({ viewer }: { viewer: Viewer | null }) {
     router.refresh();
   }
 
+  // Signed in but cannot use the full menu yet: suspended, or has not finished first-time setup
   const limited = !!viewer && (viewer.isSuspended || !viewer.role);
+  const needsSetup = !!viewer && !viewer.isSuspended && !viewer.role;
 
   let links: NavLink[] = [];
   if (!viewer) {
@@ -137,12 +139,23 @@ export default function HeaderClient({ viewer }: { viewer: Viewer | null }) {
           )}
 
           {viewer && limited && (
-            <button
-              onClick={logout}
-              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Log out
-            </button>
+            <div className="flex items-center gap-2">
+              {needsSetup && (
+                <Link
+                  href="/onboarding"
+                  onClick={close}
+                  className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 hover:shadow-md"
+                >
+                  Finish setup
+                </Link>
+              )}
+              <button
+                onClick={logout}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Log out
+              </button>
+            </div>
           )}
 
           {viewer && !limited && (

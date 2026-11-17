@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import PasswordInput from "@/components/PasswordInput";
+
+const inputClass =
+  "w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -42,7 +46,7 @@ export default function ResetPasswordPage() {
 
   if (done) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-3 px-6 text-center">
+      <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-col items-center justify-center gap-3 px-6 text-center">
         <h1 className="text-3xl font-bold text-gray-900">Password updated ✅</h1>
         <p className="text-gray-600">Taking you back to the app...</p>
       </main>
@@ -50,27 +54,25 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
+    <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-col justify-center px-6 py-10">
       <h1 className="text-3xl font-bold text-gray-900">Set a new password</h1>
       <p className="mb-6 mt-1 text-gray-600">Choose a password you haven&apos;t used before.</p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
-          type="password"
+        <PasswordInput
           required
           minLength={8}
           placeholder="New password (at least 8 characters)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none"
+          className={inputClass}
         />
-        <input
-          type="password"
+        <PasswordInput
           required
           placeholder="Confirm new password"
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
-          className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none"
+          className={inputClass}
         />
 
         {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}

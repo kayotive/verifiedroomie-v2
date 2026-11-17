@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function LoginForm({ linkFailed }: { linkFailed: boolean }) {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function LoginForm({ linkFailed }: { linkFailed: boolean }) {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
+    <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-col justify-center px-6 py-10">
       <h1 className="text-3xl font-bold text-gray-900">Login</h1>
       <p className="mb-6 mt-1 text-gray-600">Welcome back to VerifiedRoomie.</p>
 
@@ -60,8 +61,7 @@ export default function LoginForm({ linkFailed }: { linkFailed: boolean }) {
 
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">Password</label>
-          <input
-            type="password"
+          <PasswordInput
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
