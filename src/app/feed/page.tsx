@@ -1,7 +1,21 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import LogoutButton from "../dashboard/LogoutButton";
+import FilterBar from "@/components/FilterBar";
+import {
+  Avatar,
+  EmptyState,
+  SortTabs,
+  activity,
+  isNew,
+  timeAgo,
+} from "@/components/ui";
+import {
+  HomeIcon,
+  MapPinIcon,
+  SearchIcon,
+  ShieldCheckIcon,
+} from "@/components/icons";
 
 const PAGE_SIZE = 12;
 
@@ -17,6 +31,17 @@ const genderLabels: Record<string, string> = {
   female: "Female",
   other: "Other",
 };
+const occupationLabels: Record<string, string> = {
+  student: "Student",
+  nysc_corper: "NYSC Corper",
+  professional: "Professional",
+  other: "Other",
+};
+const sortOptions = [
+  { value: "recent", label: "Most recent" },
+  { value: "active", label: "Recently active" },
+  { value: "oldest", label: "Oldest first" },
+];
 
 type Media = { path: string; category: string | null; kind: string };
 type FeedListing = {
@@ -25,13 +50,15 @@ type FeedListing = {
   area: string | null;
   place_name: string | null;
   contribution_amount: number | null;
+  move_in_date: string | null;
   apartment_verified: boolean;
+  created_at: string;
+  last_active_at: string | null;
   profiles: {
     full_name: string;
     gender: string | null;
     birth_year: number | null;
-    religion: string | null;
-    smoking: string | null;
+    occupation: string | null;
     avatar_url: string | null;
     id_verified: boolean;
     phone_verified: boolean;
@@ -39,8 +66,16 @@ type FeedListing = {
   listing_media: Media[];
 };
 
-const selectClass =
-  "w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-emerald-600 focus:outline-none";
+function moveInLabel(date: string | null) {
+  if (!date) return null;
+  const d = new Date(date);
+  if (d.getTime() <= Date.now()) return "Available now";
+  return `Available from ${d.toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })}`;
+}
 
 export default async function FeedPage({
   searchParams,
@@ -69,13 +104,17 @@ export default async function FeedPage({
     .eq("receiver_id", user.id)
     .eq("status", "pending");
 
-  // Read and clean the search and filter values
+  // Read and clean the search, filter and sort values
   const q = (sp.q ?? "").replace(/[,()%*\\".:]/g, " ").trim();
+  const type = typeLabels[sp.type ?? ""] ? (sp.type as string) : "";
   const gender = sp.gender ?? "";
   const religion = sp.religion ?? "";
   const smoking = sp.smoking ?? "";
   const minAge = parseInt(sp.minAge ?? "");
   const maxAge = parseInt(sp.maxAge ?? "");
+  const minBudget = parseInt(sp.minBudget ?? "");
+  const maxBudget = parseInt(sp.maxBudget ?? "");
+  const sort = sortOptions.some((o) => o.value === sp.sort) ? (sp.sort as string) : "recent";
   const page = Math.max(1, parseInt(sp.page ?? "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
   const year = new Date().getFullYear();
@@ -83,201 +122,303 @@ export default async function FeedPage({
   let query = supabase
     .from("listings")
     .select(
-      `id, apartment_type, area, place_name, contribution_amount, apartment_verified,
-       profiles!inner(full_name, gender, birth_year, religion, smoking, avatar_url, id_verified, phone_verified),
-       listing_media(path, category, kind)`
+      `id, apartment_type, area, place_name, contribution_amount, move_in_date, apartment_verified, created_at, last_active_at,
+       profiles!inner(full_name, gender, birth_year, occupation, avatar_url, id_verified, phone_verified),
+       listing_media(path, category, kind)`,
+      { count: "exact" }
     )
     .eq("status", "published")
-    .eq("room_available", true)
-    .order("created_at", { ascending: false })
-    .range(from, from + PAGE_SIZE); // one extra row tells us if there is a next page
+    .eq("room_available", true);
 
   if (q) query = query.or(`place_name.ilike."*${q}*",area.ilike."*${q}*"`);
+  if (type) query = query.eq("apartment_type", type);
+  if (!Number.isNaN(minBudget)) query = query.gte("contribution_amount", minBudget);
+  if (!Number.isNaN(maxBudget)) query = query.lte("contribution_amount", maxBudget);
   if (gender) query = query.eq("profiles.gender", gender);
   if (religion) query = query.eq("profiles.religion", religion);
   if (smoking) query = query.eq("profiles.smoking", smoking);
   if (!Number.isNaN(maxAge)) query = query.gte("profiles.birth_year", year - maxAge);
   if (!Number.isNaN(minAge)) query = query.lte("profiles.birth_year", year - minAge);
 
-  const { data, error } = await query;
-  const rows = (data ?? []) as unknown as FeedListing[];
-  const hasNext = rows.length > PAGE_SIZE;
-  const listings = rows.slice(0, PAGE_SIZE);
+  // Sorting uses real timestamps from the database
+  if (sort === "oldest") {
+    query = query.order("created_at", { ascending: true });
+  } else if (sort === "active") {
+    query = query
+      .order("last_active_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false });
+  } else {
+    query = query.order("created_at", { ascending: false });
+  }
 
-  function pageHref(p: number) {
+  const { data, error, count } = await query.range(from, from + PAGE_SIZE - 1);
+  const listings = (data ?? []) as unknown as FeedListing[];
+  const total = count ?? listings.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const filtered = [
+    q,
+    type,
+    gender,
+    religion,
+    smoking,
+    sp.minAge,
+    sp.maxAge,
+    sp.minBudget,
+    sp.maxBudget,
+  ].some(Boolean);
+
+  function hrefWith(overrides: { page?: number; sort?: string }) {
     const params = new URLSearchParams();
     const current: Record<string, string | undefined> = {
       q,
+      type,
       gender,
       religion,
       smoking,
       minAge: sp.minAge,
       maxAge: sp.maxAge,
+      minBudget: sp.minBudget,
+      maxBudget: sp.maxBudget,
     };
     for (const [k, v] of Object.entries(current)) if (v) params.set(k, v);
-    params.set("page", String(p));
-    return `/feed?${params.toString()}`;
+    const nextSort = overrides.sort ?? sort;
+    if (nextSort !== "recent") params.set("sort", nextSort);
+    if (overrides.page && overrides.page > 1) params.set("page", String(overrides.page));
+    const qs = params.toString();
+    return qs ? `/feed?${qs}` : "/feed";
   }
 
   return (
-    <main className="mx-auto max-w-md px-4 py-6">
-      <header className="mb-2 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-emerald-700">VerifiedRoomie</h1>
-        <LogoutButton />
-      </header>
+    <main>
+      <section className="border-b border-slate-100 bg-linear-to-b from-brand-50 to-white">
+        <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+                Find your room
+              </h1>
+              <p className="mt-1 text-slate-600">
+                Verified hosts with space to share. Search by area, budget and who you&apos;d like to live with.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">
+                <span className="h-2 w-2 rounded-full bg-brand-600" />
+                {me.connect_points} Connect Points
+              </span>
+              {!!pending && (
+                <Link
+                  href="/requests"
+                  className="inline-flex items-center rounded-full bg-brand-600 px-4 py-2 font-semibold text-white shadow-sm transition hover:bg-brand-700"
+                >
+                  {pending} new request{pending === 1 ? "" : "s"}
+                </Link>
+              )}
+            </div>
+          </div>
 
-      <div className="mb-4 flex items-center justify-between text-sm">
-        <span className="font-medium text-gray-700">🎟 Connect Points: {me.connect_points}</span>
-        <div className="flex gap-4">
-          <Link href="/profile" className="font-semibold text-emerald-700">
-            Profile
-          </Link>
-          <Link href="/verify" className="font-semibold text-emerald-700">
-            Verify ID
-          </Link>
-          <Link href="/requests" className="font-semibold text-emerald-700">
-            Requests{pending ? ` (${pending})` : ""}
-          </Link>
-        </div>
-      </div>
-
-      <form method="get" className="mb-5 flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-3">
-        <input
-          name="q"
-          defaultValue={q}
-          placeholder="Search area, street, estate, town or landmark"
-          className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none"
-        />
-        <div className="grid grid-cols-2 gap-2">
-          <select name="gender" defaultValue={gender} className={selectClass}>
-            <option value="">Any gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-          <select name="smoking" defaultValue={smoking} className={selectClass}>
-            <option value="">Smoking: any</option>
-            <option value="non_smoker">Non-smoker</option>
-            <option value="smoker">Smoker</option>
-          </select>
-          <select name="religion" defaultValue={religion} className={selectClass}>
-            <option value="">Any religion</option>
-            <option value="Christian">Christian</option>
-            <option value="Muslim">Muslim</option>
-            <option value="Other">Other</option>
-          </select>
-          <div className="flex gap-2">
-            <input name="minAge" type="number" min={18} max={99} defaultValue={sp.minAge} placeholder="Min age" className={selectClass} />
-            <input name="maxAge" type="number" min={18} max={99} defaultValue={sp.maxAge} placeholder="Max age" className={selectClass} />
+          <div className="mt-6">
+            <FilterBar
+              action="/feed"
+              showHousing
+              searchPlaceholder="Area, street, estate, town or landmark"
+              values={{
+                q,
+                type,
+                gender,
+                religion,
+                smoking,
+                minAge: sp.minAge,
+                maxAge: sp.maxAge,
+                minBudget: sp.minBudget,
+                maxBudget: sp.maxBudget,
+                sort,
+              }}
+            />
           </div>
         </div>
-        <div className="flex gap-2">
-          <button type="submit" className="flex-1 rounded-xl bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700">
-            Search
-          </button>
-          <Link href="/feed" className="rounded-xl border border-gray-300 px-4 py-2 font-semibold text-gray-700 hover:bg-white">
-            Clear
-          </Link>
-        </div>
-      </form>
+      </section>
 
-      <h2 className="mb-3 text-lg font-semibold text-gray-900">Newest listings</h2>
+      <section className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
+        {error ? (
+          <p className="rounded-2xl bg-red-50 p-4 text-sm text-red-700">
+            Something went wrong loading listings: {error.message}
+          </p>
+        ) : (
+          <>
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-medium text-slate-600">
+                {total} listing{total === 1 ? "" : "s"}{" "}
+                {filtered ? "match your search" : "available right now"}
+              </p>
+              <SortTabs
+                options={sortOptions}
+                current={sort}
+                hrefFor={(value) => hrefWith({ sort: value })}
+              />
+            </div>
 
-      {error && (
-        <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-          Something went wrong loading listings: {error.message}
-        </p>
-      )}
+            {listings.length === 0 ? (
+              <EmptyState
+                icon={SearchIcon}
+                title="No listings match yet"
+                action={
+                  filtered ? (
+                    <Link
+                      href="/feed"
+                      className="rounded-xl bg-brand-600 px-5 py-3 font-semibold text-white transition hover:bg-brand-700"
+                    >
+                      Clear all filters
+                    </Link>
+                  ) : undefined
+                }
+              >
+                {filtered
+                  ? "Try a wider area, a higher budget or fewer filters."
+                  : "New rooms are added all the time. Check back soon."}
+              </EmptyState>
+            ) : (
+              <ul className="vr-rise grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {listings.map((l) => {
+                  const photos = l.listing_media.filter((m) => m.kind === "photo");
+                  const cover =
+                    photos.find((m) => m.category === "living_room") ?? photos[0];
+                  const coverUrl = cover
+                    ? supabase.storage.from("listing-media").getPublicUrl(cover.path).data
+                        .publicUrl
+                    : null;
+                  const p = l.profiles;
+                  const age = p.birth_year ? year - p.birth_year : null;
+                  const firstName = p.full_name.split(" ")[0] || "Host";
+                  const act = activity(l.last_active_at);
+                  const moveIn = moveInLabel(l.move_in_date);
 
-      {!error && listings.length === 0 && (
-        <p className="rounded-xl bg-gray-50 p-6 text-center text-gray-600">
-          No listings match your search yet. Try clearing the filters.
-        </p>
-      )}
+                  return (
+                    <li key={l.id}>
+                      <Link
+                        href={`/listings/${l.id}`}
+                        className="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-card"
+                      >
+                        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                          {coverUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={coverUrl}
+                              alt="Apartment"
+                              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center bg-linear-to-br from-brand-50 to-brand-100 text-brand-300">
+                              <HomeIcon className="h-12 w-12" />
+                            </div>
+                          )}
+                          {isNew(l.created_at) && (
+                            <span className="absolute left-3 top-3 rounded-full bg-brand-600 px-2.5 py-1 text-xs font-bold text-white shadow">
+                              New listing
+                            </span>
+                          )}
+                          <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur">
+                            {typeLabels[l.apartment_type ?? "other"]}
+                          </span>
+                        </div>
 
-      <ul className="flex flex-col gap-5">
-        {listings.map((l) => {
-          const photos = l.listing_media.filter((m) => m.kind === "photo");
-          const cover = photos.find((m) => m.category === "living_room") ?? photos[0];
-          const coverUrl = cover
-            ? supabase.storage.from("listing-media").getPublicUrl(cover.path).data.publicUrl
-            : null;
-          const p = l.profiles;
-          const age = p.birth_year ? year - p.birth_year : null;
-          const firstName = p.full_name.split(" ")[0];
+                        <div className="flex flex-1 flex-col p-5">
+                          <p className="text-xl font-extrabold text-slate-900">
+                            ₦{l.contribution_amount?.toLocaleString("en-NG")}
+                            <span className="ml-1 text-sm font-medium text-slate-500">/ year</span>
+                          </p>
+                          <p className="mt-1 flex items-center gap-1.5 text-slate-700">
+                            <MapPinIcon className="h-4 w-4 shrink-0 text-brand-600" />
+                            <span className="truncate">{l.area}</span>
+                          </p>
+                          <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-500">
+                            <span>{moveIn}</span>
+                            {act && (
+                              <span className="inline-flex items-center gap-1">
+                                <span
+                                  className={`h-1.5 w-1.5 rounded-full ${
+                                    act.recent ? "bg-green-500" : "bg-slate-300"
+                                  }`}
+                                />
+                                {act.label}
+                              </span>
+                            )}
+                          </div>
 
-          const badges = ["📧 Email verified"];
-          if (p.phone_verified) badges.push("📱 Phone verified");
-          if (p.id_verified) badges.push("🪪 ID verified");
-          if (l.apartment_verified) badges.push("🏠 Apartment verified");
+                          <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-4">
+                            <Avatar src={p.avatar_url} name={p.full_name} size={40} />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-slate-900">
+                                {firstName}
+                                {age ? `, ${age}` : ""}
+                                {p.gender ? ` · ${genderLabels[p.gender]}` : ""}
+                              </p>
+                              <p className="truncate text-xs text-slate-500">
+                                {p.occupation ? `${occupationLabels[p.occupation]} · ` : ""}
+                                Posted {timeAgo(l.created_at)}
+                              </p>
+                            </div>
+                          </div>
 
-          return (
-            <li key={l.id} className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-              <div className="relative h-48 w-full bg-gray-100">
-                {coverUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={coverUrl} alt="Apartment" className="h-full w-full object-cover" />
+                          <div className="mt-3 flex flex-wrap gap-1.5">
+                            {p.id_verified && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-700">
+                                <ShieldCheckIcon className="h-3.5 w-3.5" /> ID verified
+                              </span>
+                            )}
+                            {l.apartment_verified && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-700">
+                                <HomeIcon className="h-3.5 w-3.5" /> Apartment verified
+                              </span>
+                            )}
+                            {!p.id_verified && !l.apartment_verified && (
+                              <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                                Email verified
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="mt-4 text-sm font-semibold text-brand-700 transition group-hover:translate-x-0.5">
+                            View details →
+                          </span>
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            {totalPages > 1 && (
+              <nav className="mt-10 flex items-center justify-between" aria-label="Pages">
+                {page > 1 ? (
+                  <Link
+                    href={hrefWith({ page: page - 1 })}
+                    className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                  >
+                    ← Previous
+                  </Link>
                 ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-gray-400">
-                    No photo
-                  </div>
+                  <span />
                 )}
-                {p.avatar_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={p.avatar_url}
-                    alt={firstName}
-                    className="absolute -bottom-6 left-4 h-14 w-14 rounded-full border-4 border-white object-cover"
-                  />
+                <span className="text-sm text-slate-500">
+                  Page {page} of {totalPages}
+                </span>
+                {page < totalPages ? (
+                  <Link
+                    href={hrefWith({ page: page + 1 })}
+                    className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                  >
+                    Next →
+                  </Link>
+                ) : (
+                  <span />
                 )}
-              </div>
-
-              <div className="p-4 pt-8">
-                <p className="text-lg font-bold text-gray-900">
-                  ₦{l.contribution_amount?.toLocaleString("en-NG")}{" "}
-                  <span className="text-sm font-normal text-gray-500">per year</span>
-                </p>
-                <p className="text-gray-800">📍 {l.area}</p>
-                <p className="mt-1 text-sm text-gray-600">
-                  {typeLabels[l.apartment_type ?? "other"]} · {firstName}
-                  {age ? `, ${age}` : ""}
-                  {p.gender ? ` · ${genderLabels[p.gender]}` : ""}
-                </p>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {badges.map((b) => (
-                    <span key={b} className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
-                      {b}
-                    </span>
-                  ))}
-                </div>
-                <Link
-                  href={`/listings/${l.id}`}
-                  className="mt-3 block rounded-xl bg-emerald-600 py-2 text-center font-semibold text-white hover:bg-emerald-700"
-                >
-                  View Details
-                </Link>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-
-      {(page > 1 || hasNext) && (
-        <div className="mt-6 flex items-center justify-between">
-          {page > 1 ? (
-            <Link href={pageHref(page - 1)} className="font-semibold text-emerald-700">
-              ← Previous
-            </Link>
-          ) : (
-            <span />
-          )}
-          {hasNext && (
-            <Link href={pageHref(page + 1)} className="font-semibold text-emerald-700">
-              Next →
-            </Link>
-          )}
-        </div>
-      )}
+              </nav>
+            )}
+          </>
+        )}
+      </section>
     </main>
   );
 }

@@ -1,6 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Record "last active" at most once every 10 minutes per person
+const ACTIVE_REFRESH_MS = 10 * 60 * 1000;
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -43,18 +46,24 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Suspended accounts can only see the /suspended page
   if (user && !isPublic && path !== "/suspended") {
     const { data: me } = await supabase
       .from("profiles")
-      .select("is_suspended")
+      .select("is_suspended, last_active_at")
       .eq("id", user.id)
       .single();
 
+    // Suspended accounts can only see the /suspended page
     if (me?.is_suspended) {
       const url = request.nextUrl.clone();
       url.pathname = "/suspended";
       return NextResponse.redirect(url);
+    }
+
+    // Heartbeat: keep "last active" fresh without writing on every click
+    const last = me?.last_active_at ? new Date(me.last_active_at).getTime() : 0;
+    if (Date.now() - last > ACTIVE_REFRESH_MS) {
+      await supabase.rpc("touch_last_active");
     }
   }
 

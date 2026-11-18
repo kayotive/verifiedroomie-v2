@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
+import { SITE_URL } from "@/lib/site";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -10,12 +11,18 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "VerifiedRoomie | Find a verified housemate in Nigeria",
     template: "%s | VerifiedRoomie",
   },
   description:
     "VerifiedRoomie helps students, corps members, working professionals and other adults across all 36 Nigerian states and the FCT find compatible, verified housemates.",
+  openGraph: {
+    siteName: "VerifiedRoomie",
+    type: "website",
+    locale: "en_NG",
+  },
 };
 
 export const viewport: Viewport = {
