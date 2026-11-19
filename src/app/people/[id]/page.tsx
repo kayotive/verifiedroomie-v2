@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import AvatarZoom from "@/components/AvatarZoom";
 import { whatsappLink } from "@/lib/phone";
 import ConnectButton from "../../listings/[id]/ConnectButton";
 import ReportBlock from "@/components/ReportBlock";
@@ -82,8 +83,7 @@ export default async function PersonPage({
 
       <div className="mt-4 flex flex-col items-center text-center">
         {person.avatar_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={person.avatar_url} alt={firstName} className="h-32 w-32 rounded-full object-cover" />
+          <AvatarZoom src={person.avatar_url} name={person.full_name} size={128} />
         )}
         <h1 className="mt-3 text-2xl font-bold text-gray-900">
           {firstName}

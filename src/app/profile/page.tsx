@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import AvatarZoom from "@/components/AvatarZoom";
 import LogoutButton from "../dashboard/LogoutButton";
 import ProfileForm from "./ProfileForm";
 import DeleteAccount from "./DeleteAccount";
@@ -57,8 +58,7 @@ export default async function ProfilePage() {
         </p>
         <div className="flex items-center gap-3">
           {p.avatar_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={p.avatar_url} alt="Your photo" className="h-20 w-20 rounded-full object-cover" />
+            <AvatarZoom src={p.avatar_url} name={p.full_name} size={80} />
           )}
           <div>
             <p className="text-lg font-bold text-gray-900">

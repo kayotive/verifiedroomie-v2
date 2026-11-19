@@ -1,19 +1,26 @@
 import type { ComponentType, ReactNode, SVGProps } from "react";
 import Link from "next/link";
+import AvatarZoom from "./AvatarZoom";
 
-/** Round profile photo, or a brand-blue initial when there is no photo. */
+/** Round profile photo (click to enlarge), or a brand-blue initial when there is no photo. */
 export function Avatar({
   src,
   name,
   size = 48,
   className = "",
+  zoom = true,
 }: {
   src?: string | null;
   name?: string;
   size?: number;
   className?: string;
+  /** Photos open a larger view when clicked. Set to false to turn that off. */
+  zoom?: boolean;
 }) {
   const style = { width: size, height: size };
+  if (src && zoom) {
+    return <AvatarZoom src={src} name={name} size={size} className={className} />;
+  }
   if (src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element

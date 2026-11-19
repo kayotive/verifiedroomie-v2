@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import AvatarZoom from "@/components/AvatarZoom";
 import { whatsappLink } from "@/lib/phone";
 import ConnectButton from "./ConnectButton";
 import ListingMap from "./ListingMap";
@@ -179,8 +180,7 @@ export default async function ListingDetailsPage({
 
       <section className="mt-5 flex items-center gap-3 rounded-2xl border border-gray-200 p-3">
         {p.avatar_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={p.avatar_url} alt={firstName} className="h-16 w-16 rounded-full object-cover" />
+          <AvatarZoom src={p.avatar_url} name={p.full_name} size={64} />
         )}
         <div>
           <p className="font-semibold text-gray-900">
