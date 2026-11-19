@@ -60,6 +60,7 @@ type FeedListing = {
     birth_year: number | null;
     occupation: string | null;
     avatar_url: string | null;
+    bio: string | null;
     id_verified: boolean;
     phone_verified: boolean;
   };
@@ -123,7 +124,7 @@ export default async function FeedPage({
     .from("listings")
     .select(
       `id, apartment_type, area, place_name, contribution_amount, move_in_date, apartment_verified, created_at, last_active_at,
-       profiles!inner(full_name, gender, birth_year, occupation, avatar_url, id_verified, phone_verified),
+       profiles!inner(full_name, gender, birth_year, occupation, avatar_url, bio, id_verified, phone_verified),
        listing_media(path, category, kind)`,
       { count: "exact" }
     )
@@ -360,7 +361,12 @@ export default async function FeedPage({
                             </div>
                           </div>
 
-                          <div className="mt-3 flex flex-wrap gap-1.5">
+                          {p.bio && (
+  <p className="mt-3 line-clamp-3 whitespace-pre-line text-sm text-slate-600">
+    {p.bio}
+  </p>
+)}
+<div className="mt-3 flex flex-wrap gap-1.5">
                             {p.id_verified && (
                               <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-700">
                                 <ShieldCheckIcon className="h-3.5 w-3.5" /> ID verified
