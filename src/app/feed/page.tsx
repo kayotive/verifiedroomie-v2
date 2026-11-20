@@ -37,6 +37,7 @@ const occupationLabels: Record<string, string> = {
   professional: "Professional",
   other: "Other",
 };
+const prefLabels: Record<string, string> = { male: "Male roomie", female: "Female roomie", any: "Any gender" };
 const sortOptions = [
   { value: "recent", label: "Most recent" },
   { value: "active", label: "Recently active" },
@@ -61,6 +62,7 @@ type FeedListing = {
     occupation: string | null;
     avatar_url: string | null;
     bio: string | null;
+    roomie_gender_preference: string | null;
     id_verified: boolean;
     phone_verified: boolean;
   };
@@ -124,7 +126,7 @@ export default async function FeedPage({
     .from("listings")
     .select(
       `id, apartment_type, area, place_name, contribution_amount, move_in_date, apartment_verified, created_at, last_active_at,
-       profiles!inner(full_name, gender, birth_year, occupation, avatar_url, bio, id_verified, phone_verified),
+       profiles!inner(full_name, gender, birth_year, occupation, avatar_url, bio, roomie_gender_preference, id_verified, phone_verified),
        listing_media(path, category, kind)`,
       { count: "exact" }
     )
@@ -361,7 +363,10 @@ export default async function FeedPage({
                             </div>
                           </div>
 
-                          {p.bio && (
+                          <p className="mt-3 text-xs font-semibold text-brand-700">
+  Looking for: {prefLabels[p.roomie_gender_preference ?? "any"]}
+</p>
+{p.bio && (
   <p className="mt-3 line-clamp-3 whitespace-pre-line text-sm text-slate-600">
     {p.bio}
   </p>

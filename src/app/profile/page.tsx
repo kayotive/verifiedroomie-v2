@@ -14,6 +14,7 @@ const occupationLabels: Record<string, string> = {
   other: "Other",
 };
 const smokingLabels: Record<string, string> = { non_smoker: "Non-smoker", smoker: "Smoker" };
+const prefLabels: Record<string, string> = { male: "Male roomie", female: "Female roomie", any: "Any gender" };
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -76,7 +77,10 @@ export default async function ProfilePage() {
         <p className="mt-3 whitespace-pre-line text-sm text-gray-700">
           {p.bio || "You haven't written anything about yourself yet. Add it below."}
         </p>
-        <div className="mt-3 flex flex-wrap gap-1">
+        <p className="mt-3 text-sm font-medium text-gray-800">
+  🏠 Looking for: {prefLabels[p.roomie_gender_preference ?? "any"]}
+</p>
+<div className="mt-3 flex flex-wrap gap-1">
           {badges.map((b) => (
             <span key={b} className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
               {b}

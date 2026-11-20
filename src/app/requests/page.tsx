@@ -13,6 +13,7 @@ const occupationLabels: Record<string, string> = {
   professional: "Professional",
   other: "Other",
 };
+const prefLabels: Record<string, string> = { male: "Male roomie", female: "Female roomie", any: "Any gender" };
 const smokingLabels: Record<string, string> = { non_smoker: "Non-smoker", smoker: "Smoker" };
 
 type Person = {
@@ -24,6 +25,7 @@ type Person = {
   religion: string | null;
   smoking: string | null;
   bio: string | null;
+  roomie_gender_preference: string | null;
 };
 type Row = {
   id: string;
@@ -54,6 +56,9 @@ function PersonLine({ p, size = 56 }: { p: Person; size?: number }) {
           {age ? `, ${age}` : ""}
         </p>
         {details && <p className="truncate text-sm text-slate-600">{details}</p>}
+        <p className="truncate text-xs font-semibold text-brand-700">
+  Looking for: {prefLabels[p.roomie_gender_preference ?? "any"]}
+</p>
       </div>
     </div>
   );
@@ -84,7 +89,7 @@ export default async function RequestsPage() {
     .single();
   const browseHref = me?.user_type === "owner" ? "/people" : "/feed";
 
-  const personFields = "full_name, avatar_url, gender, birth_year, occupation, religion, smoking, bio";
+  const personFields = "full_name, avatar_url, gender, birth_year, occupation, religion, smoking, bio, roomie_gender_preference";
   const { data } = await supabase
     .from("connections")
     .select(

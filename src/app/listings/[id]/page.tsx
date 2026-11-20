@@ -25,6 +25,7 @@ const occupationLabels: Record<string, string> = {
   other: "Other",
 };
 const smokingLabels: Record<string, string> = { non_smoker: "Non-smoker", smoker: "Smoker" };
+const prefLabels: Record<string, string> = { male: "Male roomie", female: "Female roomie", any: "Any gender" };
 const categoryLabels: Record<string, string> = {
   living_room: "Living Room",
   bedroom: "Bedroom",
@@ -60,6 +61,7 @@ type Detail = {
     smoking: string | null;
     avatar_url: string | null;
     bio: string | null;
+    roomie_gender_preference: string | null;
     id_verified: boolean;
     phone_verified: boolean;
   };
@@ -84,7 +86,7 @@ export default async function ListingDetailsPage({
     .select(
       `id, owner_id, room_available, apartment_type, contribution_amount, move_in_date, description,
        house_rules, place_name, area, latitude, longitude, apartment_verified,
-       profiles!inner(full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, id_verified, phone_verified),
+       profiles!inner(full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, id_verified, phone_verified),
        listing_media(path, category, kind)`
     )
     .eq("id", id)
@@ -190,7 +192,10 @@ export default async function ListingDetailsPage({
             {p.religion ? ` · ${p.religion}` : ""}
             {p.smoking ? ` · ${smokingLabels[p.smoking]}` : ""}
           </p>
-          <div className="mt-1 flex flex-wrap gap-1">
+          <p className="mt-1 text-sm font-medium text-gray-800">
+  🏠 Looking for: {prefLabels[p.roomie_gender_preference ?? "any"]}
+</p>
+<div className="mt-1 flex flex-wrap gap-1">
             {badges.map((b) => (
               <span key={b} className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
                 {b}
