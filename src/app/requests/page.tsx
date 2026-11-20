@@ -23,6 +23,7 @@ type Person = {
   occupation: string | null;
   religion: string | null;
   smoking: string | null;
+  bio: string | null;
 };
 type Row = {
   id: string;
@@ -83,7 +84,7 @@ export default async function RequestsPage() {
     .single();
   const browseHref = me?.user_type === "owner" ? "/people" : "/feed";
 
-  const personFields = "full_name, avatar_url, gender, birth_year, occupation, religion, smoking";
+  const personFields = "full_name, avatar_url, gender, birth_year, occupation, religion, smoking, bio";
   const { data } = await supabase
     .from("connections")
     .select(
@@ -127,7 +128,13 @@ export default async function RequestsPage() {
             {incoming.map((r) => (
               <li key={r.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <PersonLine p={r.requester} size={64} />
-                <RequestActions id={r.id} />
+                {r.requester.bio && (
+  <div className="mt-4 rounded-2xl bg-slate-50 p-4">
+    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">About</p>
+    <p className="mt-1 whitespace-pre-line text-sm text-slate-700">{r.requester.bio}</p>
+  </div>
+)}
+<RequestActions id={r.id} />
               </li>
             ))}
           </ul>
