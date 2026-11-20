@@ -8,6 +8,7 @@ import ConnectButton from "./ConnectButton";
 import ListingMap from "./ListingMap";
 import OwnerListingControls from "./OwnerListingControls";
 import ReportBlock from "@/components/ReportBlock";
+import PhotoGallery from "./PhotoGallery";
 
 const typeLabels: Record<string, string> = {
   self_contained: "Self-contained",
@@ -160,17 +161,12 @@ export default async function ListingDetailsPage({
         </p>
       )}
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        {photos.map((m) => (
-          <figure key={m.path} className="overflow-hidden rounded-xl bg-gray-100">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={url(m.path)} alt={categoryLabels[m.category ?? ""] ?? "Photo"} className="h-36 w-full object-cover" />
-            <figcaption className="px-2 py-1 text-xs text-gray-600">
-              {categoryLabels[m.category ?? ""] ?? "Photo"}
-            </figcaption>
-          </figure>
-        ))}
-      </div>
+      <PhotoGallery
+  photos={photos.map((m) => ({
+    src: url(m.path),
+    label: categoryLabels[m.category ?? ""] ?? "Photo",
+  }))}
+/>
 
       {video && (
         <div className="mt-4">
