@@ -15,6 +15,7 @@ const occupationLabels: Record<string, string> = {
   other: "Other",
 };
 const smokingLabels: Record<string, string> = { non_smoker: "Non-smoker", smoker: "Smoker" };
+const prefLabels: Record<string, string> = { male: "Male roomie", female: "Female roomie", any: "Any gender" };
 const sortOptions = [
   { value: "recent", label: "Newest members" },
   { value: "active", label: "Recently active" },
@@ -31,6 +32,7 @@ type Person = {
   smoking: string | null;
   avatar_url: string | null;
   bio: string | null;
+  roomie_gender_preference: string | null;
   id_verified: boolean;
   phone_verified: boolean;
   created_at: string;
@@ -77,7 +79,7 @@ export default async function PeoplePage({
   let query = supabase
     .from("profiles")
     .select(
-      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, id_verified, phone_verified, created_at, last_active_at",
+      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, id_verified, phone_verified, created_at, last_active_at",
       { count: "exact" }
     )
     .eq("user_type", "seeker")
@@ -250,7 +252,10 @@ export default async function PeoplePage({
                           </div>
                         </div>
 
-                        <p className="mt-4 line-clamp-3 flex-1 text-sm leading-relaxed text-slate-600">
+                        <p className="mt-3 text-xs font-semibold text-brand-700">
+  Looking for: {prefLabels[p.roomie_gender_preference ?? "any"]}
+</p>
+<p className="mt-4 line-clamp-3 flex-1 text-sm leading-relaxed text-slate-600">
                           {p.bio || "This member hasn't written a bio yet."}
                         </p>
 
