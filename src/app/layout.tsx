@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
+import IdleLogout from "@/components/IdleLogout";
 import { SITE_URL } from "@/lib/site";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -38,6 +39,7 @@ export default function RootLayout({
     <html lang="en" className={jakarta.variable}>
       <body className="min-h-screen bg-white font-sans text-slate-900 antialiased">
         <SiteHeader />
+        <IdleLogout />
         {children}
       </body>
     </html>
