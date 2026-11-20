@@ -58,6 +58,7 @@ type Detail = {
     religion: string | null;
     smoking: string | null;
     avatar_url: string | null;
+    bio: string | null;
     id_verified: boolean;
     phone_verified: boolean;
   };
@@ -82,7 +83,7 @@ export default async function ListingDetailsPage({
     .select(
       `id, owner_id, room_available, apartment_type, contribution_amount, move_in_date, description,
        house_rules, place_name, area, latitude, longitude, apartment_verified,
-       profiles!inner(full_name, gender, birth_year, occupation, religion, smoking, avatar_url, id_verified, phone_verified),
+       profiles!inner(full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, id_verified, phone_verified),
        listing_media(path, category, kind)`
     )
     .eq("id", id)
@@ -203,7 +204,13 @@ export default async function ListingDetailsPage({
         </div>
       </section>
 
-      {l.description && (
+      {p.bio && (
+  <section className="mt-5">
+    <h2 className="mb-1 font-semibold text-gray-900">About {firstName}</h2>
+    <p className="whitespace-pre-line text-gray-700">{p.bio}</p>
+  </section>
+)}
+{l.description && (
         <section className="mt-5">
           <h2 className="mb-1 font-semibold text-gray-900">About the apartment</h2>
           <p className="whitespace-pre-line text-gray-700">{l.description}</p>
