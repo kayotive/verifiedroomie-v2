@@ -8,6 +8,7 @@ type Initial = {
   fullName: string;
   phone: string;
   gender: string;
+   roomiePreference: string;
   occupation: string;
   religion: string;
   smoking: string;
@@ -26,6 +27,7 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
     fullName: initial.fullName,
     phone: initial.phone,
     gender: initial.gender,
+     roomiePreference: initial.roomiePreference || "any",
     occupation: initial.occupation,
     religion: initial.religion,
     smoking: initial.smoking,
@@ -98,7 +100,7 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
       .from("profiles")
       .update({
         full_name: form.fullName.trim(),
-        gender: form.gender || null,
+        roomie_gender_preference: form.roomiePreference || "any",
         occupation: form.occupation || null,
         religion: form.religion || null,
         smoking: form.smoking || null,
@@ -172,8 +174,8 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
       </div>
 
       <div>
-        <label className={labelClass}>Gender</label>
-        <select name="gender" value={form.gender} onChange={update} className={inputClass}>
+        <label className={labelClass}>Gender <span className="font-normal text-gray-500">(cannot be changed)</span></label>
+        <select name="gender" value={form.gender} disabled className={`${inputClass} cursor-not-allowed bg-gray-100 text-gray-500`}>
           <option value="">Prefer not to say</option>
           <option value="male">Male</option>
           <option value="female">Female</option>
@@ -182,6 +184,14 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
       </div>
 
       <div>
+     <label className={labelClass}>Roomie gender preference</label>
+     <select name="roomiePreference" value={form.roomiePreference} onChange={update} className={inputClass}>
+       <option value="male">Male</option>
+       <option value="female">Female</option>
+       <option value="any">No preference</option>
+     </select>
+   </div>
+   <div>
         <label className={labelClass}>Occupation</label>
         <select name="occupation" value={form.occupation} onChange={update} className={inputClass}>
           <option value="">Select...</option>

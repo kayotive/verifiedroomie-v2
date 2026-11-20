@@ -25,7 +25,7 @@ export default async function ProfilePage() {
   const { data: p } = await supabase
     .from("profiles")
     .select(
-      "full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, user_type, id_verified, phone_verified, is_admin"
+       "full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, user_type, id_verified, phone_verified, is_admin"
     )
     .eq("id", user.id)
     .single();
@@ -95,6 +95,7 @@ export default async function ProfilePage() {
           religion: p.religion ?? "",
           smoking: p.smoking ?? "",
           bio: p.bio ?? "",
+           roomiePreference: p.roomie_gender_preference ?? "any",
           avatarUrl: p.avatar_url ?? "",
         }}
       />

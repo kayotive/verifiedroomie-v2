@@ -28,6 +28,7 @@ export default function RegisterPage() {
     occupation: "",
     religion: "",
     smoking: "",
+    roomiePreference: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -62,6 +63,7 @@ export default function RegisterPage() {
           occupation: form.occupation,
           religion: form.religion,
           smoking: form.smoking,
+           roomie_gender_preference: form.roomiePreference,
         },
       },
     });
@@ -138,6 +140,18 @@ export default function RegisterPage() {
         </div>
 
         <div>
+     <label className={labelClass}>Roomie gender preference</label>
+     <select name="roomiePreference" required value={form.roomiePreference} onChange={update} className={inputClass}>
+       <option value="">Select...</option>
+       <option value="male">Male</option>
+       <option value="female">Female</option>
+       <option value="any">No preference</option>
+     </select>
+     <p className="mt-1 text-xs text-gray-500">
+       Who you&apos;d like to live with. Anyone can still send you a request, and you choose who to accept.
+     </p>
+   </div>
+   <div>
           <label className={labelClass}>Occupation</label>
           <select name="occupation" required value={form.occupation} onChange={update} className={inputClass}>
             <option value="">Select...</option>
