@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
+import { checkBio } from "@/lib/bioCheck";
 
 const inputClass =
   "w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none";
@@ -52,6 +53,11 @@ export default function RegisterPage() {
 
     if (!form.bio.trim()) {
   setError("Please write a short bio about yourself.");
+  return;
+}
+const bioCheck = checkBio(form.bio);
+if (!bioCheck.ok) {
+  setError(bioCheck.message);
   return;
 }
 setLoading(true);

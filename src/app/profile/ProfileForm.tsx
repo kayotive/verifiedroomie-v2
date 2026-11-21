@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { checkBio } from "@/lib/bioCheck";
 
 type Initial = {
   fullName: string;
@@ -75,6 +76,11 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
 
     if (!form.bio.trim()) {
   setError("Please write something about yourself. This can't be left empty.");
+  return;
+}
+const bioCheck = checkBio(form.bio);
+if (!bioCheck.ok) {
+  setError(bioCheck.message);
   return;
 }
 setLoading(true);
