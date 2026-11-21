@@ -14,6 +14,11 @@ const occupationLabels: Record<string, string> = {
   other: "Other",
 };
 const prefLabels: Record<string, string> = { male: "Male roomie", female: "Female roomie", any: "Any gender" };
+const roomiesLabels: Record<number, string> = {
+  1: "Wants to be the only roomie",
+  2: "Okay with up to 2 roomies",
+  3: "Okay with up to 3 roomies",
+};
 const smokingLabels: Record<string, string> = { non_smoker: "Non-smoker", smoker: "Smoker" };
 
 type Person = {
@@ -26,6 +31,7 @@ type Person = {
   smoking: string | null;
   bio: string | null;
   roomie_gender_preference: string | null;
+  max_roomies: number | null;
 };
 type Row = {
   id: string;
@@ -59,6 +65,11 @@ function PersonLine({ p, size = 56 }: { p: Person; size?: number }) {
         <p className="truncate text-xs font-semibold text-brand-700">
   Looking for: {prefLabels[p.roomie_gender_preference ?? "any"]}
 </p>
+{p.max_roomies && (
+  <p className="truncate text-xs font-semibold text-brand-700">
+    👥 {roomiesLabels[p.max_roomies]}
+  </p>
+)}
       </div>
     </div>
   );
@@ -89,7 +100,7 @@ export default async function RequestsPage() {
     .single();
   const browseHref = me?.user_type === "owner" ? "/people" : "/feed";
 
-  const personFields = "full_name, avatar_url, gender, birth_year, occupation, religion, smoking, bio, roomie_gender_preference";
+  const personFields = "full_name, avatar_url, gender, birth_year, occupation, religion, smoking, bio, roomie_gender_preference, max_roomies";
   const { data } = await supabase
     .from("connections")
     .select(

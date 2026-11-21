@@ -15,6 +15,8 @@ type Initial = {
   smoking: string;
   bio: string;
   avatarUrl: string;
+  userType: string;
+maxRoomies: string;
 };
 
 const inputClass =
@@ -29,6 +31,7 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
     phone: initial.phone,
     gender: initial.gender,
      roomiePreference: initial.roomiePreference || "any",
+     maxRoomies: initial.maxRoomies,
     occupation: initial.occupation,
     religion: initial.religion,
     smoking: initial.smoking,
@@ -75,6 +78,10 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
   setError("Please write something about yourself. This can't be left empty.");
   return;
 }
+if (initial.userType === "seeker" && !form.maxRoomies) {
+  setError("Please choose how many roomies you're comfortable sharing with.");
+  return;
+}
 const bioCheck = checkBio(form.bio);
 if (!bioCheck.ok) {
   setError(bioCheck.message);
@@ -111,6 +118,7 @@ setLoading(true);
         religion: form.religion || null,
         smoking: form.smoking || null,
         bio: form.bio.trim() || null,
+        ...(initial.userType === "seeker" ? { max_roomies: Number(form.maxRoomies) } : {}),
         ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       })
       .eq("id", user.id);
@@ -198,7 +206,18 @@ setLoading(true);
        <option value="any">No preference</option>
      </select>
    </div>
-   <div>
+   {initial.userType === "seeker" && (
+  <div>
+    <label className={labelClass}>How many roomies can you share with?</label>
+    <select name="maxRoomies" required value={form.maxRoomies} onChange={update} className={inputClass}>
+      <option value="">Select...</option>
+      <option value="1">I want to be the only roomie</option>
+      <option value="2">I can share with 1 other roomie (2 of us)</option>
+      <option value="3">I can share with 2 other roomies (3 of us)</option>
+    </select>
+  </div>
+)}
+<div>
         <label className={labelClass}>Occupation</label>
         <select name="occupation" value={form.occupation} onChange={update} className={inputClass}>
           <option value="">Select...</option>
