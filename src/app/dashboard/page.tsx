@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import type { ComponentType, SVGProps } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar, EmptyState, Pill } from "@/components/ui";
+import StillAvailableButton from "./StillAvailableButton";
 import {
   FlagIcon,
   HomeIcon,
@@ -29,9 +30,17 @@ type MyListing = {
   status: string;
   room_available: boolean;
   roomies_wanted: number;
+  hidden_reason: string | null;
+last_confirmed_at: string;
   listing_media: Media[];
 };
 
+const STALE_DAYS = 30;
+const REMIND_DAYS = 14;
+
+function daysSince(date: string) {
+  return Math.floor((Date.now() - new Date(date).getTime()) / (24 * 60 * 60 * 1000));
+}
 function Tile({
   href,
   icon: Icon,
@@ -88,11 +97,17 @@ export default async function DashboardPage() {
   const { data } = await supabase
     .from("listings")
     .select(
-      "id, apartment_type, area, contribution_amount, status, room_available, roomies_wanted, listing_media(path, category, kind)"
+      "id, apartment_type, area, contribution_amount, status, room_available, roomies_wanted, hidden_reason, last_confirmed_at, listing_media(path, category, kind)"
     )
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
   const listings = (data ?? []) as unknown as MyListing[];
+  const needsConfirm = listings.filter(
+  (l) =>
+    l.status === "published" &&
+    l.room_available &&
+    daysSince(l.last_confirmed_at) >= REMIND_DAYS
+);
 
   const { count: pending } = await supabase
     .from("connections")
@@ -186,7 +201,29 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      {/* Listings */}
+      {needsConfirm.length > 0 && (
+  <section className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-5">
+    <h2 className="font-extrabold text-amber-900">Is your room still available?</h2>
+    <p className="mt-1 text-sm text-amber-900">
+      Tap to confirm, so seekers know your listing is up to date. Listings not confirmed for{" "}
+      {STALE_DAYS} days are hidden from the feed.
+    </p>
+    <ul className="mt-3 flex flex-col gap-2">
+      {needsConfirm.map((l) => (
+        <li
+          key={l.id}
+          className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-white p-3"
+        >
+          <span className="text-sm font-semibold text-slate-800">
+            {typeLabels[l.apartment_type ?? "other"]} · {l.area}
+          </span>
+          <StillAvailableButton listingId={l.id} />
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
+{/* Listings */}
       <section className="mt-10">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-extrabold tracking-tight text-slate-900">Your listings</h2>
@@ -224,9 +261,13 @@ export default async function DashboardPage() {
                 l.status === "draft" ? (
                   <Pill tone="amber">Draft</Pill>
                 ) : l.room_available ? (
-                  <Pill tone="brand">Available</Pill>
+                  daysSince(l.last_confirmed_at) >= STALE_DAYS ? (
+  <Pill tone="amber">Needs confirming</Pill>
+) : (
+  <Pill tone="brand">Available</Pill>
+)
                 ) : (
-                  <Pill>Room taken</Pill>
+                  <Pill>Hidden from feed</Pill>
                 );
 
               return (

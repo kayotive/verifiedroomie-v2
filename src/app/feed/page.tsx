@@ -124,6 +124,7 @@ export default async function FeedPage({
   const page = Math.max(1, parseInt(sp.page ?? "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
   const year = new Date().getFullYear();
+  const staleCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
   let query = supabase
     .from("listings")
@@ -134,7 +135,8 @@ export default async function FeedPage({
       { count: "exact" }
     )
     .eq("status", "published")
-    .eq("room_available", true);
+    .eq("room_available", true)
+.gte("last_confirmed_at", staleCutoff);
 
   if (q) query = query.or(`place_name.ilike."*${q}*",area.ilike."*${q}*"`);
   if (type) query = query.eq("apartment_type", type);

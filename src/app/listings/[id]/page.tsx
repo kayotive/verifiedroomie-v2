@@ -8,6 +8,7 @@ import ConnectButton from "./ConnectButton";
 import ListingMap from "./ListingMap";
 import OwnerListingControls from "./OwnerListingControls";
 import ReportBlock from "@/components/ReportBlock";
+import { timeAgo } from "@/components/ui";
 import PhotoGallery from "./PhotoGallery";
 
 const typeLabels: Record<string, string> = {
@@ -46,6 +47,8 @@ type Detail = {
   contribution_amount: number | null;
   move_in_date: string | null;
   roomies_wanted: number;
+  hidden_reason: string | null;
+last_confirmed_at: string;
   description: string | null;
   house_rules: string | null;
   place_name: string | null;
@@ -85,7 +88,7 @@ export default async function ListingDetailsPage({
   const { data } = await supabase
     .from("listings")
     .select(
-      `id, owner_id, room_available, apartment_type, contribution_amount, roomies_wanted, move_in_date, description,
+      `id, owner_id, room_available, apartment_type, contribution_amount, roomies_wanted, hidden_reason, last_confirmed_at, move_in_date, description,
        house_rules, place_name, area, latitude, longitude, apartment_verified,
        profiles!inner(full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, id_verified, phone_verified),
        listing_media(path, category, kind)`
@@ -166,6 +169,9 @@ export default async function ListingDetailsPage({
 
       <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
   👥 Accepting {l.roomies_wanted} {l.roomies_wanted === 1 ? "roomie" : "roomies"}
+</p>
+<p className="mt-1 text-xs text-gray-500">
+  ✅ Availability confirmed {timeAgo(l.last_confirmed_at)}
 </p>
 <PhotoGallery
   photos={photos.map((m) => ({
@@ -257,7 +263,7 @@ export default async function ListingDetailsPage({
 )}
 <section className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4">
         {isMine ? (
-          <OwnerListingControls listingId={l.id} roomAvailable={l.room_available} roomiesWanted={l.roomies_wanted} />
+          <OwnerListingControls listingId={l.id} roomAvailable={l.room_available} roomiesWanted={l.roomies_wanted} hiddenReason={l.hidden_reason} lastConfirmedAt={l.last_confirmed_at} />
         ) : myProfile?.user_type !== "seeker" ? (
           <p className="text-center text-gray-700">
             Only people looking for an apartment can connect with a listing.
