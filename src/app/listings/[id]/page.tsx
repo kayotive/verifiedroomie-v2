@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import AvatarZoom from "@/components/AvatarZoom";
 import { whatsappLink } from "@/lib/phone";
 import ConnectButton from "./ConnectButton";
+ import HiddenProfileConnect from "./HiddenProfileConnect";
 import ListingMap from "./ListingMap";
 import OwnerListingControls from "./OwnerListingControls";
 import ReportBlock from "@/components/ReportBlock";
@@ -102,7 +103,7 @@ export default async function ListingDetailsPage({
 
   const { data: myProfile } = await supabase
     .from("profiles")
-    .select("user_type, connect_points")
+     .select("user_type, connect_points, is_paused, paused_reason")
     .eq("id", user.id)
     .single();
 
@@ -269,11 +270,15 @@ export default async function ListingDetailsPage({
             Only people looking for an apartment can connect with a listing.
           </p>
         ) : !connection ? (
-          <ConnectButton
+          myProfile?.is_paused ? (
+     <HiddenProfileConnect reason={myProfile?.paused_reason ?? null} />
+   ) : (
+   <ConnectButton
             receiverId={l.owner_id}
             listingId={l.id}
             points={myProfile?.connect_points ?? 0}
           />
+          )
         ) : connection.status === "pending" ? (
           connection.requester_id === user.id ? (
             <p className="text-center text-gray-700">

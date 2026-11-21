@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import FilterBar from "@/components/FilterBar";
+ import ShowProfileButton from "./ShowProfileButton";
 import {
   Avatar,
   EmptyState,
@@ -96,7 +97,7 @@ export default async function FeedPage({
 
   const { data: me } = await supabase
     .from("profiles")
-    .select("user_type, connect_points, max_roomies, gender")
+     .select("user_type, connect_points, max_roomies, gender, is_paused")
     .eq("id", user.id)
     .single();
   if (!me?.user_type) redirect("/onboarding");
@@ -204,6 +205,16 @@ export default async function FeedPage({
 
   return (
     <main>
+      {me.is_paused && (
+     <div className="border-b border-amber-200 bg-amber-50">
+       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-8">
+         <p className="text-sm font-medium text-amber-900">
+           🔒 Your profile is hidden from owners.
+         </p>
+         <ShowProfileButton />
+       </div>
+     </div>
+   )}
       <section className="border-b border-slate-100 bg-linear-to-b from-brand-50 to-white">
         <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
           <div className="flex flex-wrap items-end justify-between gap-4">
