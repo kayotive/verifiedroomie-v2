@@ -1,3 +1,5 @@
+import { checkBio } from "./bioCheck";
+
 export type CheckResult = { ok: true } | { ok: false; message: string };
 
 // Letters from any language (including accents), with single spaces, hyphens
@@ -21,6 +23,10 @@ export function checkFullName(raw: string): CheckResult {
       ok: false,
       message: "Full name can only contain letters, spaces, hyphens and apostrophes.",
     };
+  }
+  // No contact details or spelled-out numbers hidden inside the name
+  if (!checkBio(name).ok) {
+    return { ok: false, message: "Full name should be your real name only." };
   }
   return { ok: true };
 }
