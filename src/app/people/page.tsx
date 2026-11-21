@@ -60,7 +60,7 @@ export default async function PeoplePage({
 
   const { data: me } = await supabase
     .from("profiles")
-    .select("user_type, connect_points")
+    .select("user_type, connect_points, gender")
     .eq("id", user.id)
     .single();
   if (!me?.user_type) redirect("/onboarding");
@@ -76,6 +76,7 @@ export default async function PeoplePage({
   const religion = sp.religion ?? "";
   const smoking = sp.smoking ?? "";
   const roomies = ["1", "2", "3"].includes(sp.roomies ?? "") ? (sp.roomies as string) : "";
+  const match = sp.match === "1" ? "1" : "";
   const minAge = parseInt(sp.minAge ?? "");
   const maxAge = parseInt(sp.maxAge ?? "");
   const sort = sortOptions.some((o) => o.value === sp.sort) ? (sp.sort as string) : "recent";
@@ -96,6 +97,7 @@ export default async function PeoplePage({
   if (religion) query = query.eq("religion", religion);
   if (smoking) query = query.eq("smoking", smoking);
   if (roomies) query = query.gte("max_roomies", Number(roomies));
+  if (match && me.gender) query = query.in("roomie_gender_preference", [me.gender, "any"]);
   if (!Number.isNaN(maxAge)) query = query.gte("birth_year", year - maxAge);
   if (!Number.isNaN(minAge)) query = query.lte("birth_year", year - minAge);
 
@@ -121,11 +123,12 @@ export default async function PeoplePage({
   const people = (data ?? []) as Person[];
   const total = count ?? people.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const filtered = [gender, religion, smoking, roomies, sp.minAge, sp.maxAge].some(Boolean);
+  const filtered = [gender, religion, smoking, roomies, match, sp.minAge, sp.maxAge].some(Boolean);
 
   function hrefWith(overrides: { page?: number; sort?: string }) {
     const params = new URLSearchParams();
     const current: Record<string, string | undefined> = {
+      match,
       roomies,
       gender,
       religion,
@@ -174,7 +177,7 @@ export default async function PeoplePage({
             <FilterBar
               action="/people"
               submitLabel="Filter"
-              values={{ gender, religion, smoking, roomies, minAge: sp.minAge, maxAge: sp.maxAge, sort }}
+              values={{ gender, religion, smoking, roomies, match, minAge: sp.minAge, maxAge: sp.maxAge, sort }}
             />
           </div>
         </div>

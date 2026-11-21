@@ -12,6 +12,7 @@ export type FilterValues = {
   minAge?: string;
   maxAge?: string;
   roomies?: string;
+  match?: string;
   sort?: string;
 };
 
@@ -166,6 +167,15 @@ export default function FilterBar({
     <option value="1">{showHousing ? "1 roomie only" : "1 roomie"}</option>
     <option value="2">{showHousing ? "Up to 2 roomies" : "2 roomies"}</option>
     <option value="3">{showHousing ? "Up to 3 roomies" : "3 roomies"}</option>
+  </select>
+</div>
+<div className="lg:col-span-3">
+  <label htmlFor="f-match" className={label}>
+    {showHousing ? "Owner's preference" : "Seeker's preference"}
+  </label>
+  <select id="f-match" name="match" defaultValue={values.match ?? ""} className={field}>
+    <option value="">Any</option>
+    <option value="1">Looking for my gender</option>
   </select>
 </div>
 <div className="lg:col-span-3">

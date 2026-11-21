@@ -96,7 +96,7 @@ export default async function FeedPage({
 
   const { data: me } = await supabase
     .from("profiles")
-    .select("user_type, connect_points, max_roomies")
+    .select("user_type, connect_points, max_roomies, gender")
     .eq("id", user.id)
     .single();
   if (!me?.user_type) redirect("/onboarding");
@@ -115,6 +115,7 @@ export default async function FeedPage({
   const religion = sp.religion ?? "";
   const smoking = sp.smoking ?? "";
   const roomies = ["1", "2", "3"].includes(sp.roomies ?? "") ? (sp.roomies as string) : "";
+  const match = sp.match === "1" ? "1" : "";
   const minAge = parseInt(sp.minAge ?? "");
   const maxAge = parseInt(sp.maxAge ?? "");
   const minBudget = parseInt(sp.minBudget ?? "");
@@ -143,6 +144,7 @@ export default async function FeedPage({
   if (religion) query = query.eq("profiles.religion", religion);
   if (smoking) query = query.eq("profiles.smoking", smoking);
   if (roomies) query = query.lte("roomies_wanted", Number(roomies));
+  if (match && me.gender) query = query.in("profiles.roomie_gender_preference", [me.gender, "any"]);
   if (!Number.isNaN(maxAge)) query = query.gte("profiles.birth_year", year - maxAge);
   if (!Number.isNaN(minAge)) query = query.lte("profiles.birth_year", year - minAge);
 
@@ -162,6 +164,7 @@ export default async function FeedPage({
   const total = count ?? listings.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const filtered = [
+    match,
     roomies,
     q,
     type,
@@ -177,6 +180,7 @@ export default async function FeedPage({
   function hrefWith(overrides: { page?: number; sort?: string }) {
     const params = new URLSearchParams();
     const current: Record<string, string | undefined> = {
+      match,
       roomies,
       q,
       type,
@@ -231,6 +235,7 @@ export default async function FeedPage({
               showHousing
               searchPlaceholder="Area, street, estate, town or landmark"
               values={{
+                match,
                 roomies,
                 q,
                 type,
