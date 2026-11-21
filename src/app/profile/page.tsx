@@ -5,6 +5,7 @@ import AvatarZoom from "@/components/AvatarZoom";
 import LogoutButton from "../dashboard/LogoutButton";
 import ProfileForm from "./ProfileForm";
 import DeleteAccount from "./DeleteAccount";
+import PauseProfile from "./PauseProfile";
 
 const genderLabels: Record<string, string> = { male: "Male", female: "Female", other: "Other" };
 const occupationLabels: Record<string, string> = {
@@ -31,7 +32,7 @@ export default async function ProfilePage() {
   const { data: p } = await supabase
     .from("profiles")
     .select(
-       "full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, user_type, id_verified, phone_verified, is_admin"
+       "full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, is_paused, paused_reason, user_type, id_verified, phone_verified, is_admin"
     )
     .eq("id", user.id)
     .single();
@@ -99,7 +100,10 @@ export default async function ProfilePage() {
         </div>
       </section>
 
-      <h2 className="mb-3 font-semibold text-gray-900">Edit your details</h2>
+      {p.user_type === "seeker" && (
+  <PauseProfile paused={!!p.is_paused} reason={p.paused_reason ?? null} />
+)}
+<h2 className="mb-3 font-semibold text-gray-900">Edit your details</h2>
       <ProfileForm
         initial={{
           fullName: p.full_name,

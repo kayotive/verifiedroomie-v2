@@ -44,7 +44,7 @@ export default async function PersonPage({
   const { data: person } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, id_verified, phone_verified, user_type, is_suspended"
+      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, id_verified, phone_verified, user_type, is_suspended, is_paused"
     )
     .eq("id", id)
     .maybeSingle();
@@ -69,6 +69,7 @@ export default async function PersonPage({
     .limit(1)
     .maybeSingle();
 
+  if (person.is_paused && !connection) notFound();
   let phone: string | null = null;
   if (connection?.status === "accepted") {
     const { data: num } = await supabase.rpc("get_contact_phone", { p_user: person.id });

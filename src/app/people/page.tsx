@@ -91,7 +91,8 @@ export default async function PeoplePage({
       { count: "exact" }
     )
     .eq("user_type", "seeker")
-    .eq("is_suspended", false);
+    .eq("is_suspended", false)
+.eq("is_paused", false);
 
   if (gender) query = query.eq("gender", gender);
   if (religion) query = query.eq("religion", religion);
