@@ -96,7 +96,7 @@ export default async function FeedPage({
 
   const { data: me } = await supabase
     .from("profiles")
-    .select("user_type, connect_points")
+    .select("user_type, connect_points, max_roomies")
     .eq("id", user.id)
     .single();
   if (!me?.user_type) redirect("/onboarding");
@@ -114,6 +114,7 @@ export default async function FeedPage({
   const gender = sp.gender ?? "";
   const religion = sp.religion ?? "";
   const smoking = sp.smoking ?? "";
+  const roomies = ["1", "2", "3"].includes(sp.roomies ?? "") ? (sp.roomies as string) : "";
   const minAge = parseInt(sp.minAge ?? "");
   const maxAge = parseInt(sp.maxAge ?? "");
   const minBudget = parseInt(sp.minBudget ?? "");
@@ -141,6 +142,7 @@ export default async function FeedPage({
   if (gender) query = query.eq("profiles.gender", gender);
   if (religion) query = query.eq("profiles.religion", religion);
   if (smoking) query = query.eq("profiles.smoking", smoking);
+  if (roomies) query = query.lte("roomies_wanted", Number(roomies));
   if (!Number.isNaN(maxAge)) query = query.gte("profiles.birth_year", year - maxAge);
   if (!Number.isNaN(minAge)) query = query.lte("profiles.birth_year", year - minAge);
 
@@ -160,6 +162,7 @@ export default async function FeedPage({
   const total = count ?? listings.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const filtered = [
+    roomies,
     q,
     type,
     gender,
@@ -174,6 +177,7 @@ export default async function FeedPage({
   function hrefWith(overrides: { page?: number; sort?: string }) {
     const params = new URLSearchParams();
     const current: Record<string, string | undefined> = {
+      roomies,
       q,
       type,
       gender,
@@ -227,6 +231,7 @@ export default async function FeedPage({
               showHousing
               searchPlaceholder="Area, street, estate, town or landmark"
               values={{
+                roomies,
                 q,
                 type,
                 gender,
@@ -254,6 +259,17 @@ export default async function FeedPage({
               <p className="text-sm font-medium text-slate-600">
                 {total} listing{total === 1 ? "" : "s"}{" "}
                 {filtered ? "match your search" : "available right now"}
+                {me.max_roomies && String(me.max_roomies) !== roomies && (
+  <>
+    {" · "}
+    <Link
+      href={`/feed?roomies=${me.max_roomies}`}
+      className="font-semibold text-brand-700 hover:text-brand-800"
+    >
+      Show listings that fit me
+    </Link>
+  </>
+)}
               </p>
               <SortTabs
                 options={sortOptions}

@@ -75,6 +75,7 @@ export default async function PeoplePage({
   const gender = sp.gender ?? "";
   const religion = sp.religion ?? "";
   const smoking = sp.smoking ?? "";
+  const roomies = ["1", "2", "3"].includes(sp.roomies ?? "") ? (sp.roomies as string) : "";
   const minAge = parseInt(sp.minAge ?? "");
   const maxAge = parseInt(sp.maxAge ?? "");
   const sort = sortOptions.some((o) => o.value === sp.sort) ? (sp.sort as string) : "recent";
@@ -94,6 +95,7 @@ export default async function PeoplePage({
   if (gender) query = query.eq("gender", gender);
   if (religion) query = query.eq("religion", religion);
   if (smoking) query = query.eq("smoking", smoking);
+  if (roomies) query = query.gte("max_roomies", Number(roomies));
   if (!Number.isNaN(maxAge)) query = query.gte("birth_year", year - maxAge);
   if (!Number.isNaN(minAge)) query = query.lte("birth_year", year - minAge);
 
@@ -119,11 +121,12 @@ export default async function PeoplePage({
   const people = (data ?? []) as Person[];
   const total = count ?? people.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const filtered = [gender, religion, smoking, sp.minAge, sp.maxAge].some(Boolean);
+  const filtered = [gender, religion, smoking, roomies, sp.minAge, sp.maxAge].some(Boolean);
 
   function hrefWith(overrides: { page?: number; sort?: string }) {
     const params = new URLSearchParams();
     const current: Record<string, string | undefined> = {
+      roomies,
       gender,
       religion,
       smoking,
@@ -171,7 +174,7 @@ export default async function PeoplePage({
             <FilterBar
               action="/people"
               submitLabel="Filter"
-              values={{ gender, religion, smoking, minAge: sp.minAge, maxAge: sp.maxAge, sort }}
+              values={{ gender, religion, smoking, roomies, minAge: sp.minAge, maxAge: sp.maxAge, sort }}
             />
           </div>
         </div>

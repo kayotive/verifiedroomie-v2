@@ -11,6 +11,7 @@ export type FilterValues = {
   smoking?: string;
   minAge?: string;
   maxAge?: string;
+  roomies?: string;
   sort?: string;
 };
 
@@ -46,6 +47,7 @@ export default function FilterBar({
     values.smoking,
     values.minAge,
     values.maxAge,
+    values.roomies,
   ].filter(Boolean).length;
 
   return (
@@ -156,6 +158,17 @@ export default function FilterBar({
         </div>
 
         <div className="lg:col-span-3">
+  <label htmlFor="f-roomies" className={label}>
+    {showHousing ? "Roomies accepted" : "Roomies you're taking in"}
+  </label>
+  <select id="f-roomies" name="roomies" defaultValue={values.roomies ?? ""} className={field}>
+    <option value="">Any</option>
+    <option value="1">{showHousing ? "1 roomie only" : "1 roomie"}</option>
+    <option value="2">{showHousing ? "Up to 2 roomies" : "2 roomies"}</option>
+    <option value="3">{showHousing ? "Up to 3 roomies" : "3 roomies"}</option>
+  </select>
+</div>
+<div className="lg:col-span-3">
           <span className={label}>Age range</span>
           <div className="flex gap-2">
             <input
