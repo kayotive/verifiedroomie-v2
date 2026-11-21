@@ -73,7 +73,11 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
       return;
     }
 
-    setLoading(true);
+    if (!form.bio.trim()) {
+  setError("Please write something about yourself. This can't be left empty.");
+  return;
+}
+setLoading(true);
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -163,6 +167,7 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
         <label className={labelClass}>About me</label>
         <textarea
           name="bio"
+          required
           rows={4}
           maxLength={300}
           placeholder="Tell people a little about yourself: your routine, what you're like to live with..."

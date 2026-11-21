@@ -29,13 +29,14 @@ export default function RegisterPage() {
     religion: "",
     smoking: "",
     roomiePreference: "",
+    bio: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
   function update(
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
@@ -49,7 +50,11 @@ export default function RegisterPage() {
       return;
     }
 
-    setLoading(true);
+    if (!form.bio.trim()) {
+  setError("Please write a short bio about yourself.");
+  return;
+}
+setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
@@ -63,6 +68,7 @@ export default function RegisterPage() {
           occupation: form.occupation,
           religion: form.religion,
           smoking: form.smoking,
+          bio: form.bio.trim(),
            roomie_gender_preference: form.roomiePreference,
         },
       },
@@ -181,7 +187,24 @@ export default function RegisterPage() {
           </select>
         </div>
 
-        {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+        <div>
+  <label className={labelClass}>About me</label>
+  <textarea
+    name="bio"
+    required
+    rows={4}
+    maxLength={300}
+    placeholder="Tell people a little about yourself: your routine, what you're like to live with..."
+    value={form.bio}
+    onChange={update}
+    className={inputClass}
+  />
+  <p className="mt-1 flex justify-between text-xs text-gray-500">
+    <span>People read this before accepting your request.</span>
+    <span>{form.bio.length}/300</span>
+  </p>
+</div>
+{error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
         <button
           type="submit"
