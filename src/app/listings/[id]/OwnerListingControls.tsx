@@ -7,15 +7,39 @@ import { createClient } from "@/lib/supabase/client";
 export default function OwnerListingControls({
   listingId,
   roomAvailable,
+  roomiesWanted,
 }: {
   listingId: string;
   roomAvailable: boolean;
+  roomiesWanted: number;
 }) {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState("");
+  const [roomies, setRoomies] = useState(String(roomiesWanted));
+const [roomiesSaved, setRoomiesSaved] = useState(false);
+
+async function saveRoomies(value: string) {
+  const previous = roomies;
+  setRoomies(value);
+  setRoomiesSaved(false);
+  setError("");
+  setLoading(true);
+  const { error } = await supabase
+    .from("listings")
+    .update({ roomies_wanted: Number(value) })
+    .eq("id", listingId);
+  setLoading(false);
+  if (error) {
+    setRoomies(previous);
+    setError(error.message);
+    return;
+  }
+  setRoomiesSaved(true);
+  router.refresh();
+}
 
   async function toggle() {
     setLoading(true);
@@ -83,7 +107,27 @@ export default function OwnerListingControls({
         {roomAvailable ? "Mark room as taken" : "Mark room as available again"}
       </button>
 
-      {!confirming ? (
+      <div className="rounded-xl border border-gray-200 bg-white p-3">
+  <label className="mb-1 block text-sm font-medium text-gray-700">
+    Roomies you&apos;re still accepting
+  </label>
+  <select
+    value={roomies}
+    onChange={(e) => saveRoomies(e.target.value)}
+    disabled={loading}
+    className="w-full rounded-xl border border-gray-300 px-3 py-2 text-gray-900 focus:border-emerald-600 focus:outline-none disabled:opacity-60"
+  >
+    <option value="1">1 roomie</option>
+    <option value="2">2 roomies</option>
+    <option value="3">3 roomies</option>
+  </select>
+  <p className="mt-1 text-xs text-gray-500">
+    {roomiesSaved
+      ? "Saved ✅ Seekers now see the new number."
+      : "Saves as soon as you change it. The address and map pin can't be changed."}
+  </p>
+</div>
+{!confirming ? (
         <button
           onClick={() => setConfirming(true)}
           className="text-sm font-semibold text-red-600 hover:text-red-700"

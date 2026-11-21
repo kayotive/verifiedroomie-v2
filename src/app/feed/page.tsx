@@ -52,6 +52,7 @@ type FeedListing = {
   place_name: string | null;
   contribution_amount: number | null;
   move_in_date: string | null;
+  roomies_wanted: number;
   apartment_verified: boolean;
   created_at: string;
   last_active_at: string | null;
@@ -125,7 +126,7 @@ export default async function FeedPage({
   let query = supabase
     .from("listings")
     .select(
-      `id, apartment_type, area, place_name, contribution_amount, move_in_date, apartment_verified, created_at, last_active_at,
+      `id, apartment_type, area, place_name, contribution_amount, roomies_wanted, move_in_date, apartment_verified, created_at, last_active_at,
        profiles!inner(full_name, gender, birth_year, occupation, avatar_url, bio, roomie_gender_preference, id_verified, phone_verified),
        listing_media(path, category, kind)`,
       { count: "exact" }
@@ -334,7 +335,10 @@ export default async function FeedPage({
                             <MapPinIcon className="h-4 w-4 shrink-0 text-brand-600" />
                             <span className="truncate">{l.area}</span>
                           </p>
-                          <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-500">
+                          <p className="mt-2 flex w-fit items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">
+  👥 Accepting {l.roomies_wanted} {l.roomies_wanted === 1 ? "roomie" : "roomies"}
+</p>
+<div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-500">
                             <span>{moveIn}</span>
                             {act && (
                               <span className="inline-flex items-center gap-1">

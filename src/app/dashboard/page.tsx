@@ -28,6 +28,7 @@ type MyListing = {
   contribution_amount: number | null;
   status: string;
   room_available: boolean;
+  roomies_wanted: number;
   listing_media: Media[];
 };
 
@@ -87,7 +88,7 @@ export default async function DashboardPage() {
   const { data } = await supabase
     .from("listings")
     .select(
-      "id, apartment_type, area, contribution_amount, status, room_available, listing_media(path, category, kind)"
+      "id, apartment_type, area, contribution_amount, status, room_available, roomies_wanted, listing_media(path, category, kind)"
     )
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
@@ -257,7 +258,10 @@ export default async function DashboardPage() {
                         <MapPinIcon className="h-4 w-4 shrink-0 text-brand-600" />
                         <span className="truncate">{l.area}</span>
                       </p>
-                      <p className="mt-3 text-lg font-extrabold text-slate-900">
+                      <p className="mt-2 text-sm font-medium text-brand-700">
+  👥 Accepting {l.roomies_wanted} {l.roomies_wanted === 1 ? "roomie" : "roomies"}
+</p>
+<p className="mt-3 text-lg font-extrabold text-slate-900">
                         ₦{l.contribution_amount?.toLocaleString("en-NG")}
                         <span className="ml-1 text-sm font-medium text-slate-500">/ year</span>
                       </p>
