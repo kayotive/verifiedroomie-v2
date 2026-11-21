@@ -147,3 +147,68 @@ export function checkListingText(raw: string): BioCheck {
 
   return { ok: true };
 }
+// ---------- Listing form: stricter, with a limit across all fields ----------
+
+const MAX_LISTING_NUMBERS = 6; // digits + spelled-out numbers allowed across the whole listing text
+
+function countNumberTokens(t: string): number {
+  const digits = (t.match(/\p{Nd}/gu) ?? []).length;
+  const words = (t.match(new RegExp(NUMBER_WORD_SOURCE, "g")) ?? []).length;
+  return digits + words;
+}
+
+/**
+ * One listing field.
+ * Description and house rules: no digits at all (write "two bedroom").
+ * Estate/street and area: a house or plot number only (up to 4 digits in total).
+ */
+export function checkListingField(label: string, raw: string): BioCheck {
+  const t = normalize(raw);
+
+  const contact = checkContact(t);
+  if (!contact.ok) return contact;
+
+  if (looksLikePhone(t)) {
+    return {
+      ok: false,
+      message:
+        "Phone numbers can't be added here. Contact details are shared automatically once people connect.",
+    };
+  }
+
+  const isAddress = /street|area/i.test(label);
+  if (isAddress) {
+    const digitCount = (t.match(/\p{Nd}/gu) ?? []).length;
+    if (/\p{Nd}{4,}/u.test(t) || digitCount > 4) {
+      return {
+        ok: false,
+        message:
+          "Please keep numbers in the address to a house or plot number only (up to 4 digits in total).",
+      };
+    }
+  } else if (/\p{Nd}/u.test(t)) {
+    return {
+      ok: false,
+      message:
+        "Numbers aren't allowed here. Write them in words if you need them, for example \"two bedroom\".",
+    };
+  }
+
+  return { ok: true };
+}
+
+/**
+ * All listing text together: stops a phone number being split into pieces
+ * across the estate name, area, description and house rules.
+ */
+export function checkListingCombined(values: string[]): BioCheck {
+  const total = values.reduce((sum, v) => sum + countNumberTokens(normalize(v)), 0);
+  if (total > MAX_LISTING_NUMBERS) {
+    return {
+      ok: false,
+      message:
+        "There are too many numbers across your listing text. Please remove any numbers or number words you don't need.",
+    };
+  }
+  return { ok: true };
+}

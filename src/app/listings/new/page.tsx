@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import LocationPicker from "./LocationPicker";
-import { checkListingText } from "@/lib/bioCheck";
+import { checkListingField, checkListingCombined } from "@/lib/bioCheck";
 
 const inputClass =
   "w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none";
@@ -110,13 +110,23 @@ export default function NewListingPage() {
   ["House rules", form.houseRules],
 ];
 for (const [fieldName, value] of textChecks) {
-  const result = checkListingText(value);
+  const result = checkListingField(fieldName, value);
   if (!result.ok) {
     setError(`${fieldName}: ${result.message}`);
     return;
   }
 }
-const missing = REQUIRED_PHOTOS.filter((p) => !files[p.key]);
+const combined = checkListingCombined(textChecks.map(([, value]) => value));
+   if (!combined.ok) {
+     setError(combined.message);
+     return;
+   }
+
+   if (Number(form.contributionAmount) > 50000000) {
+     setError("Please enter the yearly rent in naira (maximum ₦50,000,000).");
+     return;
+   }
+   const missing = REQUIRED_PHOTOS.filter((p) => !files[p.key]);
     if (missing.length > 0) {
       setError(`Please add photos for: ${missing.map((m) => m.label).join(", ")}.`);
       return;
