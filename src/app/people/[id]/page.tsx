@@ -14,6 +14,12 @@ const occupationLabels: Record<string, string> = {
   other: "Other",
 };
 const smokingLabels: Record<string, string> = { non_smoker: "Non-smoker", smoker: "Smoker" };
+const prefLabels: Record<string, string> = { male: "Male roomie", female: "Female roomie", any: "Any gender" };
+const roomiesLabels: Record<number, string> = {
+  1: "Wants to be the only roomie",
+  2: "Okay with up to 2 roomies",
+  3: "Okay with up to 3 roomies",
+};
 
 export default async function PersonPage({
   params,
@@ -38,7 +44,7 @@ export default async function PersonPage({
   const { data: person } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, id_verified, phone_verified, user_type, is_suspended"
+      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, id_verified, phone_verified, user_type, is_suspended"
     )
     .eq("id", id)
     .maybeSingle();
@@ -97,7 +103,15 @@ export default async function PersonPage({
           {person.religion ?? ""}
           {person.smoking ? ` · ${smokingLabels[person.smoking]}` : ""}
         </p>
-        <div className="mt-2 flex flex-wrap justify-center gap-1">
+        <p className="mt-2 text-sm font-medium text-gray-800">
+  🏠 Looking for: {prefLabels[person.roomie_gender_preference ?? "any"]}
+</p>
+{person.max_roomies && (
+  <p className="mt-1 text-sm font-medium text-gray-800">
+    👥 {roomiesLabels[person.max_roomies]}
+  </p>
+)}
+<div className="mt-2 flex flex-wrap justify-center gap-1">
           {badges.map((b) => (
             <span key={b} className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
               {b}
