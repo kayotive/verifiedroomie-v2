@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
 import { checkBio } from "@/lib/bioCheck";
+import { checkFullName, checkEmail } from "@/lib/validators";
 
 const inputClass =
   "w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none";
@@ -51,7 +52,18 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!form.bio.trim()) {
+     const nameCheck = checkFullName(form.fullName);
+   if (!nameCheck.ok) {
+     setError(nameCheck.message);
+     return;
+   }
+
+   const emailCheck = checkEmail(form.email);
+   if (!emailCheck.ok) {
+     setError(emailCheck.message);
+     return;
+   }
+   if (!form.bio.trim()) {
   setError("Please write a short bio about yourself.");
   return;
 }
@@ -62,12 +74,12 @@ if (!bioCheck.ok) {
 }
 setLoading(true);
     const { data, error } = await supabase.auth.signUp({
-      email: form.email,
+       email: form.email.trim().toLowerCase(),
       password: form.password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/confirm`,
         data: {
-          full_name: form.fullName,
+           full_name: form.fullName.trim().replace(/\s+/g, " "),
           phone: form.phone,
           date_of_birth: form.dateOfBirth,
           gender: form.gender,

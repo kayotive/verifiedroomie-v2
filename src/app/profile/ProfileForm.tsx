@@ -69,10 +69,7 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
     setError("");
     setSaved(false);
 
-    if (!form.fullName.trim()) {
-      setError("Please enter your name.");
-      return;
-    }
+    
 
     if (!form.bio.trim()) {
   setError("Please write something about yourself. This can't be left empty.");
@@ -109,7 +106,6 @@ setLoading(true);
     const { error: profileError } = await supabase
       .from("profiles")
       .update({
-        full_name: form.fullName.trim(),
         roomie_gender_preference: form.roomiePreference || "any",
         occupation: form.occupation || null,
         religion: form.religion || null,
@@ -159,8 +155,8 @@ setLoading(true);
       </div>
 
       <div>
-        <label className={labelClass}>Full name</label>
-        <input name="fullName" required value={form.fullName} onChange={update} className={inputClass} />
+        <label className={labelClass}>Full name <span className="font-normal text-gray-500">(cannot be changed)</span></label>
+        <input name="fullName" value={form.fullName} disabled className={`${inputClass} cursor-not-allowed bg-gray-100 text-gray-500`} />
       </div>
 
       <div>
