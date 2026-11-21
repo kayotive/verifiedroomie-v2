@@ -243,6 +243,10 @@ export default async function RequestsPage() {
         <Link href="/blocked" className="text-sm font-semibold text-slate-500 hover:text-slate-700">
           Blocked users
         </Link>
+        <span className="mx-3 text-slate-300">·</span>
+<Link href="/safety" className="text-sm font-semibold text-slate-500 hover:text-slate-700">
+  Safety tips
+</Link>
       </div>
     </main>
   );

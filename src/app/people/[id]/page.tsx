@@ -127,7 +127,16 @@ export default async function PersonPage({
         </section>
       )}
 
-      <section className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+      <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+  <p className="font-semibold">🛡️ Stay safe</p>
+  <p className="mt-1">
+    Meet in daylight and ask to see a valid ID. Don&apos;t hand over keys until the money is in your own bank account, and never trust a payment screenshot.{" "}
+    <Link href="/safety" className="font-semibold underline">
+      Read the safety tips
+    </Link>
+  </p>
+</div>
+<section className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4">
         {!connection ? (
           <ConnectButton receiverId={person.id} points={me.connect_points} />
         ) : connection.status === "pending" ? (

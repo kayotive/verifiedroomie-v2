@@ -244,7 +244,18 @@ export default async function ListingDetailsPage({
         </section>
       )}
 
-      <section className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+      {!isMine && (
+  <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+    <p className="font-semibold">🛡️ Stay safe</p>
+    <p className="mt-1">
+      Never pay anyone before you&apos;ve seen the place and met the person. Meet in daylight and tell someone where you&apos;re going.{" "}
+      <Link href="/safety" className="font-semibold underline">
+        Read the safety tips
+      </Link>
+    </p>
+  </div>
+)}
+<section className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4">
         {isMine ? (
           <OwnerListingControls listingId={l.id} roomAvailable={l.room_available} roomiesWanted={l.roomies_wanted} />
         ) : myProfile?.user_type !== "seeker" ? (
