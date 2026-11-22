@@ -109,6 +109,25 @@ export default async function ListingDetailsPage({
     .single();
 
   const isMine = l.owner_id === user.id;
+  const notConfirmedForTooLong =
+     new Date(l.last_confirmed_at).getTime() < Date.now() - 30 * 24 * 60 * 60 * 1000;
+   if (!isMine && (!l.room_available || notConfirmedForTooLong)) {
+     return (
+       <main className="mx-auto max-w-md px-4 py-10 text-center">
+         <p className="text-4xl" aria-hidden="true">🔒</p>
+         <h1 className="mt-3 text-2xl font-bold text-gray-900">This listing isn&apos;t available</h1>
+         <p className="mt-2 text-gray-600">
+           The owner has hidden it or it has been taken. If you saved it, you&apos;ll find it in your saved listings.
+         </p>
+         <Link
+           href="/feed"
+           className="mt-5 inline-block rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white hover:bg-emerald-700"
+         >
+           Browse listings
+         </Link>
+       </main>
+     );
+   }
   const { data: savedRow } = await supabase
      .from("saved_listings")
      .select("id")
