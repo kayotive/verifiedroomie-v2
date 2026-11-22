@@ -224,7 +224,7 @@ export default function OwnerListingControls({
       ) : (
         <div className="rounded-xl border border-red-200 bg-red-50 p-3">
           <p className="text-sm text-red-800">
-            This permanently deletes the listing, its photos and its video, and ends every connection made through it (phone numbers will stop showing). This cannot be undone.
+            This permanently deletes the listing, its photos and its video, and ends every connection made through it (phone numbers will stop showing). Seekers with unanswered requests get their Connect Point back. This cannot be undone.
           </p>
           <div className="mt-2 flex gap-2">
             <button
