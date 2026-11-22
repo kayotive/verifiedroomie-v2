@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -73,6 +73,21 @@ export default function NewListingPage() {
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  useEffect(() => {
+     async function check() {
+       const {
+         data: { user },
+       } = await supabase.auth.getUser();
+       if (!user) return;
+       const { count } = await supabase
+         .from("listings")
+         .select("id", { count: "exact", head: true })
+         .eq("owner_id", user.id);
+       if ((count ?? 0) > 0) router.replace("/dashboard");
+     }
+     check();
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, []);
 
   function update(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>

@@ -153,12 +153,14 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
-          <Link
+          {listings.length === 0 && (
+            <Link
             href="/listings/new"
             className="rounded-xl bg-white px-5 py-3 font-semibold text-brand-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
           >
             + Create listing
           </Link>
+          )}
         </div>
       </section>
 
@@ -227,11 +229,7 @@ export default async function DashboardPage() {
       <section className="mt-10">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-extrabold tracking-tight text-slate-900">Your listings</h2>
-          {listings.length > 0 && (
-            <Link href="/listings/new" className="text-sm font-semibold text-brand-700 hover:text-brand-800">
-              + Add another
-            </Link>
-          )}
+          
         </div>
 
         {listings.length === 0 ? (
