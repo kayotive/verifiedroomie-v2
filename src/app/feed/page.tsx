@@ -174,11 +174,11 @@ export default async function FeedPage({
 
    const { data: acceptedRows } = await supabase
      .from("connections")
-     .select("requester_id, receiver_id")
+     .select("listing_id")
      .eq("status", "accepted");
    const connectedOwnerIds = new Set(
      (acceptedRows ?? []).map(
-       (r) => (r.requester_id === user.id ? r.receiver_id : r.requester_id) as string
+       (r) => r.listing_id as string
      )
    );
   const total = count ?? listings.length;
@@ -351,7 +351,7 @@ export default async function FeedPage({
                   return (
                     <li key={l.id} className="relative">
                       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 aspect-[4/3]">
-     {connectedOwnerIds.has(l.owner_id) ? (
+     {connectedOwnerIds.has(l.id) ? (
        <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-brand-700 shadow-sm">
          Connected ✓
        </span>

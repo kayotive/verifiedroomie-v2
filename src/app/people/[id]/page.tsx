@@ -60,9 +60,17 @@ export default async function PersonPage({
     notFound();
   }
 
-  const { data: connection } = await supabase
+  const { data: myListing } = await supabase
+     .from("listings")
+     .select("id")
+     .eq("owner_id", user.id)
+     .order("created_at", { ascending: false })
+     .limit(1)
+     .maybeSingle();
+     const { data: connection } = await supabase
     .from("connections")
     .select("status, requester_id")
+    .eq("listing_id", myListing?.id ?? "00000000-0000-0000-0000-000000000000")
     .or(
       `and(requester_id.eq.${user.id},receiver_id.eq.${person.id}),and(requester_id.eq.${person.id},receiver_id.eq.${user.id})`
     )
@@ -138,7 +146,14 @@ export default async function PersonPage({
   </p>
 </div>
 <section className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4">
-        {!connection ? (
+        {!myListing ? (
+     <p className="text-center text-gray-700">
+       Create your listing first, then you can connect with people.{" "}
+       <Link href="/listings/new" className="font-semibold text-emerald-700">
+         Create listing
+       </Link>
+     </p>
+   ) : !connection ? (
           <ConnectButton receiverId={person.id} points={me.connect_points} />
         ) : connection.status === "pending" ? (
           connection.requester_id === user.id ? (

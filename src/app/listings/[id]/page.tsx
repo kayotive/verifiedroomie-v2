@@ -142,6 +142,7 @@ export default async function ListingDetailsPage({
     const { data: conn } = await supabase
       .from("connections")
       .select("status, requester_id")
+      .eq("listing_id", l.id)
       .or(
         `and(requester_id.eq.${user.id},receiver_id.eq.${l.owner_id}),and(requester_id.eq.${l.owner_id},receiver_id.eq.${user.id})`
       )
