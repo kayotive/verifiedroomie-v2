@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import FilterBar from "@/components/FilterBar";
+ import SaveButton from "@/components/SaveButton";
  import ShowProfileButton from "./ShowProfileButton";
 import {
   Avatar,
@@ -54,6 +55,7 @@ type FeedListing = {
   contribution_amount: number | null;
   move_in_date: string | null;
   roomies_wanted: number;
+  owner_id: string;
   apartment_verified: boolean;
   created_at: string;
   last_active_at: string | null;
@@ -130,7 +132,7 @@ export default async function FeedPage({
   let query = supabase
     .from("listings")
     .select(
-      `id, apartment_type, area, place_name, contribution_amount, roomies_wanted, move_in_date, apartment_verified, created_at, last_active_at,
+      `id, owner_id, apartment_type, area, place_name, contribution_amount, roomies_wanted, move_in_date, apartment_verified, created_at, last_active_at,
        profiles!inner(full_name, gender, birth_year, occupation, avatar_url, bio, roomie_gender_preference, id_verified, phone_verified),
        listing_media(path, category, kind)`,
       { count: "exact" }
@@ -164,6 +166,21 @@ export default async function FeedPage({
 
   const { data, error, count } = await query.range(from, from + PAGE_SIZE - 1);
   const listings = (data ?? []) as unknown as FeedListing[];
+  const { data: savedRows } = await supabase
+     .from("saved_listings")
+     .select("listing_id")
+     .eq("user_id", user.id);
+   const savedIds = new Set((savedRows ?? []).map((r) => r.listing_id as string));
+
+   const { data: acceptedRows } = await supabase
+     .from("connections")
+     .select("requester_id, receiver_id")
+     .eq("status", "accepted");
+   const connectedOwnerIds = new Set(
+     (acceptedRows ?? []).map(
+       (r) => (r.requester_id === user.id ? r.receiver_id : r.requester_id) as string
+     )
+   );
   const total = count ?? listings.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const filtered = [
@@ -332,7 +349,22 @@ export default async function FeedPage({
                   const moveIn = moveInLabel(l.move_in_date);
 
                   return (
-                    <li key={l.id}>
+                    <li key={l.id} className="relative">
+                      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 aspect-[4/3]">
+     {connectedOwnerIds.has(l.owner_id) ? (
+       <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-brand-700 shadow-sm">
+         Connected ✓
+       </span>
+     ) : (
+       <div className="pointer-events-auto absolute bottom-3 right-3">
+         <SaveButton
+           listingId={l.id}
+           userId={user.id}
+           initialSaved={savedIds.has(l.id)}
+         />
+       </div>
+     )}
+   </div>
                       <Link
                         href={`/listings/${l.id}`}
                         className="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-card"

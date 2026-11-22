@@ -6,6 +6,7 @@ import AvatarZoom from "@/components/AvatarZoom";
 import { whatsappLink } from "@/lib/phone";
 import ConnectButton from "./ConnectButton";
  import HiddenProfileConnect from "./HiddenProfileConnect";
+ import SaveButton from "@/components/SaveButton";
 import ListingMap from "./ListingMap";
 import OwnerListingControls from "./OwnerListingControls";
 import ReportBlock from "@/components/ReportBlock";
@@ -108,6 +109,12 @@ export default async function ListingDetailsPage({
     .single();
 
   const isMine = l.owner_id === user.id;
+  const { data: savedRow } = await supabase
+     .from("saved_listings")
+     .select("id")
+     .eq("user_id", user.id)
+     .eq("listing_id", l.id)
+     .maybeSingle();
 
   let connection: { status: string; requester_id: string } | null = null;
   let phone: string | null = null;
@@ -174,6 +181,11 @@ export default async function ListingDetailsPage({
 <p className="mt-1 text-xs text-gray-500">
   ✅ Availability confirmed {timeAgo(l.last_confirmed_at)}
 </p>
+{!isMine && myProfile?.user_type === "seeker" && connection?.status !== "accepted" && (
+     <div className="mt-3">
+       <SaveButton listingId={l.id} userId={user.id} initialSaved={!!savedRow} showLabel />
+     </div>
+   )}
 <PhotoGallery
   photos={photos.map((m) => ({
     src: url(m.path),

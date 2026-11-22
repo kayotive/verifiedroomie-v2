@@ -81,6 +81,7 @@ export default function HeaderClient({ viewer }: { viewer: Viewer | null }) {
   } else if (!limited) {
     links = [
       { href: "/feed", label: "Listings" },
+      { href: "/saved", label: "Saved" },
       { href: "/requests", label: "Requests", badge: viewer.pendingRequests },
     ];
   }
