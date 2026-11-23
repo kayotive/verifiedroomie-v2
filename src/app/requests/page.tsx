@@ -5,6 +5,7 @@ import { whatsappLink } from "@/lib/phone";
 import { Avatar, EmptyState, Pill } from "@/components/ui";
 import { SearchIcon, UsersIcon } from "@/components/icons";
 import RequestActions from "./RequestActions";
+import { lookingText } from "@/lib/locations";
 
 const genderLabels: Record<string, string> = { male: "Male", female: "Female", other: "Other" };
 const occupationLabels: Record<string, string> = {
@@ -32,6 +33,8 @@ type Person = {
   bio: string | null;
   roomie_gender_preference: string | null;
   max_roomies: number | null;
+  looking_state: string | null;
+looking_area: string | null;
 };
 type Row = {
   id: string;
@@ -70,6 +73,11 @@ function PersonLine({ p, size = 56 }: { p: Person; size?: number }) {
     👥 {roomiesLabels[p.max_roomies]}
   </p>
 )}
+{p.looking_state && (
+  <p className="truncate text-xs font-semibold text-brand-700">
+    📍 {lookingText(p.looking_state, p.looking_area)}
+  </p>
+)}
       </div>
     </div>
   );
@@ -100,7 +108,7 @@ export default async function RequestsPage() {
     .single();
   const browseHref = me?.user_type === "owner" ? "/people" : "/feed";
 
-  const personFields = "full_name, avatar_url, gender, birth_year, occupation, religion, smoking, bio, roomie_gender_preference, max_roomies";
+  const personFields = "full_name, avatar_url, gender, birth_year, occupation, religion, smoking, bio, roomie_gender_preference, max_roomies, looking_state, looking_area";
   const { data } = await supabase
     .from("connections")
     .select(

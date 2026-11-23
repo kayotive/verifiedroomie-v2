@@ -73,3 +73,13 @@ export function areaText(l: StateLocation, area: string) {
 export const LOCATIONS: StateLocation[] = [...RAW].sort((a, b) =>
   stateLabel(a).localeCompare(stateLabel(b))
 );
+// How a seeker's search location is written, for example "Lugbe, Abuja" or "Anywhere in Edo"
+export function lookingText(
+  state: string | null | undefined,
+  area: string | null | undefined
+) {
+  const loc = LOCATIONS.find((l) => l.state === state);
+  if (!loc) return "";
+  const place = loc.display ?? loc.state;
+  return area ? `${area}, ${place}` : `Anywhere in ${place}`;
+}

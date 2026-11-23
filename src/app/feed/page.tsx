@@ -11,7 +11,7 @@ import {
   SearchIcon,
   ShieldCheckIcon,
 } from "@/components/icons";
-import { LOCATIONS, areaText } from "@/lib/locations";
+import { LOCATIONS, areaText, lookingText } from "@/lib/locations";
 
 const PAGE_SIZE = 12;
 
@@ -93,7 +93,7 @@ export default async function FeedPage({
 
   const { data: me } = await supabase
     .from("profiles")
-    .select("user_type, connect_points, is_paused")
+    .select("user_type, connect_points, is_paused, looking_state, looking_area")
     .eq("id", user.id)
     .single();
   if (!me?.user_type) redirect("/onboarding");
@@ -217,6 +217,18 @@ export default async function FeedPage({
 
           <div className="mt-6">
             <LocationFilter action="/feed" state={state} area={area} sort={sort} />
+            {!filtered && me.looking_state && (
+  <p className="mt-3 text-sm">
+    <Link
+      href={`/feed?state=${encodeURIComponent(me.looking_state)}${
+        me.looking_area ? `&area=${encodeURIComponent(me.looking_area)}` : ""
+      }`}
+      className="font-semibold text-brand-700 hover:text-brand-800"
+    >
+      📍 Show rooms in {lookingText(me.looking_state, me.looking_area)}
+    </Link>
+  </p>
+)}
           </div>
         </div>
       </section>

@@ -5,6 +5,7 @@ import AvatarZoom from "@/components/AvatarZoom";
 import { whatsappLink } from "@/lib/phone";
 import ConnectButton from "../../listings/[id]/ConnectButton";
 import ReportBlock from "@/components/ReportBlock";
+import { lookingText } from "@/lib/locations";
 
 const genderLabels: Record<string, string> = { male: "Male", female: "Female", other: "Other" };
 const occupationLabels: Record<string, string> = {
@@ -44,7 +45,7 @@ export default async function PersonPage({
   const { data: person } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, id_verified, phone_verified, user_type, is_suspended, is_paused"
+      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, looking_state, looking_area, id_verified, phone_verified, user_type, is_suspended, is_paused"
     )
     .eq("id", id)
     .maybeSingle();
@@ -118,6 +119,11 @@ export default async function PersonPage({
 {person.max_roomies && (
   <p className="mt-1 text-sm font-medium text-gray-800">
     👥 {roomiesLabels[person.max_roomies]}
+  </p>
+)}
+{person.looking_state && (
+  <p className="mt-1 text-sm font-medium text-gray-800">
+    📍 Looking in: {lookingText(person.looking_state, person.looking_area)}
   </p>
 )}
 <div className="mt-2 flex flex-wrap justify-center gap-1">

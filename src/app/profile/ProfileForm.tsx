@@ -4,19 +4,22 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { checkBio } from "@/lib/bioCheck";
+import LocationSelect from "@/components/LocationSelect";
 
 type Initial = {
   fullName: string;
   phone: string;
   gender: string;
-   roomiePreference: string;
   occupation: string;
   religion: string;
   smoking: string;
   bio: string;
   avatarUrl: string;
+  roomiePreference: string;
   userType: string;
-maxRoomies: string;
+  maxRoomies: string;
+  lookingState: string;
+  lookingArea: string;
 };
 
 const inputClass =
@@ -30,12 +33,14 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
     fullName: initial.fullName,
     phone: initial.phone,
     gender: initial.gender,
-     roomiePreference: initial.roomiePreference || "any",
-     maxRoomies: initial.maxRoomies,
     occupation: initial.occupation,
     religion: initial.religion,
     smoking: initial.smoking,
     bio: initial.bio,
+    roomiePreference: initial.roomiePreference || "any",
+    maxRoomies: initial.maxRoomies,
+    lookingState: initial.lookingState,
+    lookingArea: initial.lookingArea,
   });
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState(initial.avatarUrl);
@@ -72,22 +77,26 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
     setError("");
     setSaved(false);
 
-    
-
     if (!form.bio.trim()) {
-  setError("Please write something about yourself. This can't be left empty.");
-  return;
-}
-if (initial.userType === "seeker" && !form.maxRoomies) {
-  setError("Please choose how many roomies you're comfortable sharing with.");
-  return;
-}
-const bioCheck = checkBio(form.bio);
-if (!bioCheck.ok) {
-  setError(bioCheck.message);
-  return;
-}
-setLoading(true);
+      setError("Please write something about yourself. This can't be left empty.");
+      return;
+    }
+    if (initial.userType === "seeker" && !form.maxRoomies) {
+      setError("Please choose how many roomies you're comfortable sharing with.");
+      return;
+    }
+    if (initial.userType === "seeker" && !form.lookingState) {
+      setError("Please choose where you are looking.");
+      return;
+    }
+
+    const bioCheck = checkBio(form.bio);
+    if (!bioCheck.ok) {
+      setError(bioCheck.message);
+      return;
+    }
+
+    setLoading(true);
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -118,7 +127,13 @@ setLoading(true);
         religion: form.religion || null,
         smoking: form.smoking || null,
         bio: form.bio.trim() || null,
-        ...(initial.userType === "seeker" ? { max_roomies: Number(form.maxRoomies) } : {}),
+        ...(initial.userType === "seeker"
+          ? {
+              max_roomies: Number(form.maxRoomies),
+              looking_state: form.lookingState,
+              looking_area: form.lookingArea || null,
+            }
+          : {}),
         ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       })
       .eq("id", user.id);
@@ -163,8 +178,15 @@ setLoading(true);
       </div>
 
       <div>
-        <label className={labelClass}>Full name <span className="font-normal text-gray-500">(cannot be changed)</span></label>
-        <input name="fullName" value={form.fullName} disabled className={`${inputClass} cursor-not-allowed bg-gray-100 text-gray-500`} />
+        <label className={labelClass}>
+          Full name <span className="font-normal text-gray-500">(cannot be changed)</span>
+        </label>
+        <input
+          name="fullName"
+          value={form.fullName}
+          disabled
+          className={`${inputClass} cursor-not-allowed bg-gray-100 text-gray-500`}
+        />
       </div>
 
       <div>
@@ -189,8 +211,15 @@ setLoading(true);
       </div>
 
       <div>
-        <label className={labelClass}>Gender <span className="font-normal text-gray-500">(cannot be changed)</span></label>
-        <select name="gender" value={form.gender} disabled className={`${inputClass} cursor-not-allowed bg-gray-100 text-gray-500`}>
+        <label className={labelClass}>
+          Gender <span className="font-normal text-gray-500">(cannot be changed)</span>
+        </label>
+        <select
+          name="gender"
+          value={form.gender}
+          disabled
+          className={`${inputClass} cursor-not-allowed bg-gray-100 text-gray-500`}
+        >
           <option value="">Prefer not to say</option>
           <option value="male">Male</option>
           <option value="female">Female</option>
@@ -199,25 +228,51 @@ setLoading(true);
       </div>
 
       <div>
-     <label className={labelClass}>Roomie gender preference</label>
-     <select name="roomiePreference" value={form.roomiePreference} onChange={update} className={inputClass}>
-       <option value="male">Male</option>
-       <option value="female">Female</option>
-       <option value="any">No preference</option>
-     </select>
-   </div>
-   {initial.userType === "seeker" && (
-  <div>
-    <label className={labelClass}>How many roomies can you share with?</label>
-    <select name="maxRoomies" required value={form.maxRoomies} onChange={update} className={inputClass}>
-      <option value="">Select...</option>
-      <option value="1">I want to be the only roomie</option>
-      <option value="2">I can share with 1 other roomie (2 of us)</option>
-      <option value="3">I can share with 2 other roomies (3 of us)</option>
-    </select>
-  </div>
-)}
-<div>
+        <label className={labelClass}>Roomie gender preference</label>
+        <select
+          name="roomiePreference"
+          value={form.roomiePreference}
+          onChange={update}
+          className={inputClass}
+        >
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="any">No preference</option>
+        </select>
+      </div>
+
+      {initial.userType === "seeker" && (
+        <>
+          <div>
+            <label className={labelClass}>How many roomies can you share with?</label>
+            <select
+              name="maxRoomies"
+              required
+              value={form.maxRoomies}
+              onChange={update}
+              className={inputClass}
+            >
+              <option value="">Select...</option>
+              <option value="1">I want to be the only roomie</option>
+              <option value="2">I can share with 1 other roomie (2 of us)</option>
+              <option value="3">I can share with 2 other roomies (3 of us)</option>
+            </select>
+          </div>
+
+          <LocationSelect
+            state={form.lookingState}
+            area={form.lookingArea}
+            onChange={(s, a) => {
+              setSaved(false);
+              setForm({ ...form, lookingState: s, lookingArea: a });
+            }}
+            inputClass={inputClass}
+            labelClass={labelClass}
+          />
+        </>
+      )}
+
+      <div>
         <label className={labelClass}>Occupation</label>
         <select name="occupation" value={form.occupation} onChange={update} className={inputClass}>
           <option value="">Select...</option>

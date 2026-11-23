@@ -6,6 +6,7 @@ import LogoutButton from "../dashboard/LogoutButton";
 import ProfileForm from "./ProfileForm";
 import DeleteAccount from "./DeleteAccount";
 import PauseProfile from "./PauseProfile";
+import { lookingText } from "@/lib/locations";
 
 const genderLabels: Record<string, string> = { male: "Male", female: "Female", other: "Other" };
 const occupationLabels: Record<string, string> = {
@@ -32,7 +33,7 @@ export default async function ProfilePage() {
   const { data: p } = await supabase
     .from("profiles")
     .select(
-       "full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, is_paused, paused_reason, user_type, id_verified, phone_verified, is_admin"
+       "full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, looking_state, looking_area, is_paused, paused_reason, user_type, id_verified, phone_verified, is_admin"
     )
     .eq("id", user.id)
     .single();
@@ -91,6 +92,11 @@ export default async function ProfilePage() {
     👥 {roomiesLabels[p.max_roomies]}
   </p>
 )}
+{p.user_type === "seeker" && p.looking_state && (
+  <p className="mt-1 text-sm font-medium text-gray-800">
+    📍 Looking in: {lookingText(p.looking_state, p.looking_area)}
+  </p>
+)}
 <div className="mt-3 flex flex-wrap gap-1">
           {badges.map((b) => (
             <span key={b} className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
@@ -116,6 +122,8 @@ export default async function ProfilePage() {
            roomiePreference: p.roomie_gender_preference ?? "any",
            userType: p.user_type ?? "",
 maxRoomies: p.max_roomies ? String(p.max_roomies) : "",
+lookingState: p.looking_state ?? "",
+lookingArea: p.looking_area ?? "",
           avatarUrl: p.avatar_url ?? "",
         }}
       />

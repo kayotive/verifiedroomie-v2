@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import LocationFilter from "@/components/LocationFilter";
 import { Avatar, EmptyState, Pill, SortTabs, activity, isNew, timeAgo } from "@/components/ui";
 import { ShieldCheckIcon, UsersIcon } from "@/components/icons";
+import { LOCATIONS, lookingText } from "@/lib/locations";
 
 const PAGE_SIZE = 12;
 
@@ -38,6 +40,8 @@ type Person = {
   bio: string | null;
   roomie_gender_preference: string | null;
   max_roomies: number | null;
+  looking_state: string | null;
+  looking_area: string | null;
   id_verified: boolean;
   phone_verified: boolean;
   created_at: string;
@@ -71,20 +75,46 @@ export default async function PeoplePage({
     .eq("receiver_id", user.id)
     .eq("status", "pending");
 
+  // Search: a state first, then (optionally) an area in that state
+  const loc = LOCATIONS.find((l) => l.state === sp.state);
+  const state = loc ? loc.state : "";
+  const area = loc && loc.areas.includes(sp.area ?? "") ? (sp.area as string) : "";
   const sort = sortOptions.some((o) => o.value === sp.sort) ? (sp.sort as string) : "recent";
   const page = Math.max(1, parseInt(sp.page ?? "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
   const year = new Date().getFullYear();
 
+  // The owner's own listing, for the "near your listing" shortcut
+  const { data: myListing } = await supabase
+    .from("listings")
+    .select("state, area")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const myLoc = LOCATIONS.find((l) => l.state === myListing?.state);
+  const myAreaName = myListing?.area ? String(myListing.area).split(",")[0].trim() : "";
+  const nearHref = myLoc
+    ? `/people?state=${encodeURIComponent(myLoc.state)}${
+        myLoc.areas.includes(myAreaName) ? `&area=${encodeURIComponent(myAreaName)}` : ""
+      }`
+    : null;
+
   let query = supabase
     .from("profiles")
     .select(
-      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, id_verified, phone_verified, created_at, last_active_at",
+      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, looking_state, looking_area, id_verified, phone_verified, created_at, last_active_at",
       { count: "exact" }
     )
     .eq("user_type", "seeker")
     .eq("is_suspended", false)
     .eq("is_paused", false);
+
+  // Seekers looking in this state, and in this area (or anywhere in the state)
+  if (loc) query = query.eq("looking_state", loc.state);
+  if (loc && area) {
+    query = query.or(`looking_area.eq."${area}",looking_area.is.null`);
+  }
 
   // Hide anyone blocked in either direction
   const { data: hiddenData } = await supabase.rpc("hidden_user_ids");
@@ -108,9 +138,12 @@ export default async function PeoplePage({
   const people = (data ?? []) as Person[];
   const total = count ?? people.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const filtered = !!loc;
 
   function hrefWith(overrides: { page?: number; sort?: string }) {
     const params = new URLSearchParams();
+    if (state) params.set("state", state);
+    if (area) params.set("area", area);
     const nextSort = overrides.sort ?? sort;
     if (nextSort !== "recent") params.set("sort", nextSort);
     if (overrides.page && overrides.page > 1) params.set("page", String(overrides.page));
@@ -128,7 +161,8 @@ export default async function PeoplePage({
                 People looking for a place
               </h1>
               <p className="mt-1 text-slate-600">
-                Find a housemate for your space. Newest members first.
+                Find a housemate for your space. Pick a state, then an area, to see who is looking
+                there.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3 text-sm">
@@ -146,6 +180,20 @@ export default async function PeoplePage({
               )}
             </div>
           </div>
+
+          <div className="mt-6">
+            <LocationFilter action="/people" state={state} area={area} sort={sort} />
+          </div>
+          {!filtered && nearHref && (
+            <p className="mt-3 text-sm">
+              <Link
+                href={nearHref}
+                className="font-semibold text-brand-700 hover:text-brand-800"
+              >
+                📍 Show people looking near your listing
+              </Link>
+            </p>
+          )}
         </div>
       </section>
 
@@ -158,7 +206,8 @@ export default async function PeoplePage({
           <>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-medium text-slate-600">
-                {total} {total === 1 ? "person" : "people"} looking right now
+                {total} {total === 1 ? "person" : "people"}{" "}
+                {filtered ? "match your search" : "looking right now"}
               </p>
               <SortTabs
                 options={sortOptions}
@@ -168,8 +217,23 @@ export default async function PeoplePage({
             </div>
 
             {people.length === 0 ? (
-              <EmptyState icon={UsersIcon} title="No one is looking right now">
-                New people join all the time. Check back soon.
+              <EmptyState
+                icon={UsersIcon}
+                title="No one matches yet"
+                action={
+                  filtered ? (
+                    <Link
+                      href="/people"
+                      className="rounded-xl bg-brand-600 px-5 py-3 font-semibold text-white transition hover:bg-brand-700"
+                    >
+                      Clear search
+                    </Link>
+                  ) : undefined
+                }
+              >
+                {filtered
+                  ? "No one is looking there yet. Try another area, or choose All areas."
+                  : "New people join all the time. Check back soon."}
               </EmptyState>
             ) : (
               <ul className="vr-rise grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -214,7 +278,12 @@ export default async function PeoplePage({
                           </div>
                         </div>
 
-                        <p className="mt-3 text-xs font-semibold text-brand-700">
+                        {p.looking_state && (
+                          <p className="mt-3 text-xs font-semibold text-brand-700">
+                            📍 Looking in: {lookingText(p.looking_state, p.looking_area)}
+                          </p>
+                        )}
+                        <p className="mt-1 text-xs font-semibold text-brand-700">
                           Looking for: {prefLabels[p.roomie_gender_preference ?? "any"]}
                         </p>
                         {p.max_roomies && (
