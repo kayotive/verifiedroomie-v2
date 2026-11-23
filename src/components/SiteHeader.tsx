@@ -21,6 +21,12 @@ export default async function SiteHeader() {
     .eq("receiver_id", user.id)
     .eq("status", "pending");
 
+  const { count: unread } = await supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .is("read_at", null);
+
   return (
     <HeaderClient
       viewer={{
@@ -31,6 +37,7 @@ export default async function SiteHeader() {
         idVerified: !!p?.id_verified,
         isSuspended: !!p?.is_suspended,
         pendingRequests: count ?? 0,
+        unreadNotifications: unread ?? 0,
       }}
     />
   );
