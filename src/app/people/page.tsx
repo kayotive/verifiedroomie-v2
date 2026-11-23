@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import FilterBar from "@/components/FilterBar";
 import { Avatar, EmptyState, Pill, SortTabs, activity, isNew, timeAgo } from "@/components/ui";
 import { ShieldCheckIcon, UsersIcon } from "@/components/icons";
 
@@ -60,7 +59,7 @@ export default async function PeoplePage({
 
   const { data: me } = await supabase
     .from("profiles")
-    .select("user_type, connect_points, gender")
+    .select("user_type, connect_points")
     .eq("id", user.id)
     .single();
   if (!me?.user_type) redirect("/onboarding");
@@ -72,13 +71,6 @@ export default async function PeoplePage({
     .eq("receiver_id", user.id)
     .eq("status", "pending");
 
-  const gender = sp.gender ?? "";
-  const religion = sp.religion ?? "";
-  const smoking = sp.smoking ?? "";
-  const roomies = ["1", "2", "3"].includes(sp.roomies ?? "") ? (sp.roomies as string) : "";
-  const match = sp.match === "1" ? "1" : "";
-  const minAge = parseInt(sp.minAge ?? "");
-  const maxAge = parseInt(sp.maxAge ?? "");
   const sort = sortOptions.some((o) => o.value === sp.sort) ? (sp.sort as string) : "recent";
   const page = Math.max(1, parseInt(sp.page ?? "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
@@ -92,15 +84,7 @@ export default async function PeoplePage({
     )
     .eq("user_type", "seeker")
     .eq("is_suspended", false)
-.eq("is_paused", false);
-
-  if (gender) query = query.eq("gender", gender);
-  if (religion) query = query.eq("religion", religion);
-  if (smoking) query = query.eq("smoking", smoking);
-  if (roomies) query = query.gte("max_roomies", Number(roomies));
-  if (match && me.gender) query = query.in("roomie_gender_preference", [me.gender, "any"]);
-  if (!Number.isNaN(maxAge)) query = query.gte("birth_year", year - maxAge);
-  if (!Number.isNaN(minAge)) query = query.lte("birth_year", year - minAge);
+    .eq("is_paused", false);
 
   // Hide anyone blocked in either direction
   const { data: hiddenData } = await supabase.rpc("hidden_user_ids");
@@ -124,20 +108,9 @@ export default async function PeoplePage({
   const people = (data ?? []) as Person[];
   const total = count ?? people.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const filtered = [gender, religion, smoking, roomies, match, sp.minAge, sp.maxAge].some(Boolean);
 
   function hrefWith(overrides: { page?: number; sort?: string }) {
     const params = new URLSearchParams();
-    const current: Record<string, string | undefined> = {
-      match,
-      roomies,
-      gender,
-      religion,
-      smoking,
-      minAge: sp.minAge,
-      maxAge: sp.maxAge,
-    };
-    for (const [k, v] of Object.entries(current)) if (v) params.set(k, v);
     const nextSort = overrides.sort ?? sort;
     if (nextSort !== "recent") params.set("sort", nextSort);
     if (overrides.page && overrides.page > 1) params.set("page", String(overrides.page));
@@ -173,14 +146,6 @@ export default async function PeoplePage({
               )}
             </div>
           </div>
-
-          <div className="mt-6">
-            <FilterBar
-              action="/people"
-              submitLabel="Filter"
-              values={{ gender, religion, smoking, roomies, match, minAge: sp.minAge, maxAge: sp.maxAge, sort }}
-            />
-          </div>
         </div>
       </section>
 
@@ -193,8 +158,7 @@ export default async function PeoplePage({
           <>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-medium text-slate-600">
-                {total} {total === 1 ? "person" : "people"}{" "}
-                {filtered ? "match your filters" : "looking right now"}
+                {total} {total === 1 ? "person" : "people"} looking right now
               </p>
               <SortTabs
                 options={sortOptions}
@@ -204,23 +168,8 @@ export default async function PeoplePage({
             </div>
 
             {people.length === 0 ? (
-              <EmptyState
-                icon={UsersIcon}
-                title="No one matches yet"
-                action={
-                  filtered ? (
-                    <Link
-                      href="/people"
-                      className="rounded-xl bg-brand-600 px-5 py-3 font-semibold text-white transition hover:bg-brand-700"
-                    >
-                      Clear all filters
-                    </Link>
-                  ) : undefined
-                }
-              >
-                {filtered
-                  ? "Try fewer filters or a wider age range."
-                  : "New people join all the time. Check back soon."}
+              <EmptyState icon={UsersIcon} title="No one is looking right now">
+                New people join all the time. Check back soon.
               </EmptyState>
             ) : (
               <ul className="vr-rise grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -266,14 +215,14 @@ export default async function PeoplePage({
                         </div>
 
                         <p className="mt-3 text-xs font-semibold text-brand-700">
-  Looking for: {prefLabels[p.roomie_gender_preference ?? "any"]}
-</p>
-{p.max_roomies && (
-  <p className="mt-1 text-xs font-semibold text-brand-700">
-    👥 {roomiesLabels[p.max_roomies]}
-  </p>
-)}
-<p className="mt-4 line-clamp-3 flex-1 text-sm leading-relaxed text-slate-600">
+                          Looking for: {prefLabels[p.roomie_gender_preference ?? "any"]}
+                        </p>
+                        {p.max_roomies && (
+                          <p className="mt-1 text-xs font-semibold text-brand-700">
+                            👥 {roomiesLabels[p.max_roomies]}
+                          </p>
+                        )}
+                        <p className="mt-4 line-clamp-3 flex-1 text-sm leading-relaxed text-slate-600">
                           {p.bio || "This member hasn't written a bio yet."}
                         </p>
 

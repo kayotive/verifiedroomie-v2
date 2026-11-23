@@ -1,23 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import FilterBar from "@/components/FilterBar";
- import SaveButton from "@/components/SaveButton";
- import ShowProfileButton from "./ShowProfileButton";
-import {
-  Avatar,
-  EmptyState,
-  SortTabs,
-  activity,
-  isNew,
-  timeAgo,
-} from "@/components/ui";
+import LocationFilter from "@/components/LocationFilter";
+import SaveButton from "@/components/SaveButton";
+import ShowProfileButton from "./ShowProfileButton";
+import { Avatar, EmptyState, SortTabs, activity, isNew, timeAgo } from "@/components/ui";
 import {
   HomeIcon,
   MapPinIcon,
   SearchIcon,
   ShieldCheckIcon,
 } from "@/components/icons";
+import { LOCATIONS, areaText } from "@/lib/locations";
 
 const PAGE_SIZE = 12;
 
@@ -49,13 +43,13 @@ const sortOptions = [
 type Media = { path: string; category: string | null; kind: string };
 type FeedListing = {
   id: string;
+  owner_id: string;
   apartment_type: string | null;
   area: string | null;
   place_name: string | null;
   contribution_amount: number | null;
-  move_in_date: string | null;
   roomies_wanted: number;
-  owner_id: string;
+  move_in_date: string | null;
   apartment_verified: boolean;
   created_at: string;
   last_active_at: string | null;
@@ -99,7 +93,7 @@ export default async function FeedPage({
 
   const { data: me } = await supabase
     .from("profiles")
-     .select("user_type, connect_points, max_roomies, gender, is_paused")
+    .select("user_type, connect_points, is_paused")
     .eq("id", user.id)
     .single();
   if (!me?.user_type) redirect("/onboarding");
@@ -111,18 +105,10 @@ export default async function FeedPage({
     .eq("receiver_id", user.id)
     .eq("status", "pending");
 
-  // Read and clean the search, filter and sort values
-  const q = (sp.q ?? "").replace(/[,()%*\\".:]/g, " ").trim();
-  const type = typeLabels[sp.type ?? ""] ? (sp.type as string) : "";
-  const gender = sp.gender ?? "";
-  const religion = sp.religion ?? "";
-  const smoking = sp.smoking ?? "";
-  const roomies = ["1", "2", "3"].includes(sp.roomies ?? "") ? (sp.roomies as string) : "";
-  const match = sp.match === "1" ? "1" : "";
-  const minAge = parseInt(sp.minAge ?? "");
-  const maxAge = parseInt(sp.maxAge ?? "");
-  const minBudget = parseInt(sp.minBudget ?? "");
-  const maxBudget = parseInt(sp.maxBudget ?? "");
+  // Search: a state first, then (optionally) an area in that state
+  const loc = LOCATIONS.find((l) => l.state === sp.state);
+  const state = loc ? loc.state : "";
+  const area = loc && loc.areas.includes(sp.area ?? "") ? (sp.area as string) : "";
   const sort = sortOptions.some((o) => o.value === sp.sort) ? (sp.sort as string) : "recent";
   const page = Math.max(1, parseInt(sp.page ?? "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
@@ -139,19 +125,10 @@ export default async function FeedPage({
     )
     .eq("status", "published")
     .eq("room_available", true)
-.gte("last_confirmed_at", staleCutoff);
+    .gte("last_confirmed_at", staleCutoff);
 
-  if (q) query = query.or(`place_name.ilike."*${q}*",area.ilike."*${q}*"`);
-  if (type) query = query.eq("apartment_type", type);
-  if (!Number.isNaN(minBudget)) query = query.gte("contribution_amount", minBudget);
-  if (!Number.isNaN(maxBudget)) query = query.lte("contribution_amount", maxBudget);
-  if (gender) query = query.eq("profiles.gender", gender);
-  if (religion) query = query.eq("profiles.religion", religion);
-  if (smoking) query = query.eq("profiles.smoking", smoking);
-  if (roomies) query = query.lte("roomies_wanted", Number(roomies));
-  if (match && me.gender) query = query.in("profiles.roomie_gender_preference", [me.gender, "any"]);
-  if (!Number.isNaN(maxAge)) query = query.gte("profiles.birth_year", year - maxAge);
-  if (!Number.isNaN(minAge)) query = query.lte("profiles.birth_year", year - minAge);
+  if (loc) query = query.eq("state", loc.state);
+  if (loc && area) query = query.eq("area", areaText(loc, area));
 
   // Sorting uses real timestamps from the database
   if (sort === "oldest") {
@@ -166,53 +143,30 @@ export default async function FeedPage({
 
   const { data, error, count } = await query.range(from, from + PAGE_SIZE - 1);
   const listings = (data ?? []) as unknown as FeedListing[];
-  const { data: savedRows } = await supabase
-     .from("saved_listings")
-     .select("listing_id")
-     .eq("user_id", user.id);
-   const savedIds = new Set((savedRows ?? []).map((r) => r.listing_id as string));
 
-   const { data: acceptedRows } = await supabase
-     .from("connections")
-     .select("listing_id")
-     .eq("status", "accepted");
-   const connectedOwnerIds = new Set(
-     (acceptedRows ?? []).map(
-       (r) => r.listing_id as string
-     )
-   );
+  const { data: savedRows } = await supabase
+    .from("saved_listings")
+    .select("listing_id")
+    .eq("user_id", user.id);
+  const savedIds = new Set((savedRows ?? []).map((r) => r.listing_id as string));
+
+  // Listings where the owner has already accepted this seeker
+  const { data: acceptedRows } = await supabase
+    .from("connections")
+    .select("listing_id")
+    .eq("status", "accepted");
+  const connectedListingIds = new Set(
+    (acceptedRows ?? []).map((r) => r.listing_id as string)
+  );
+
   const total = count ?? listings.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const filtered = [
-    match,
-    roomies,
-    q,
-    type,
-    gender,
-    religion,
-    smoking,
-    sp.minAge,
-    sp.maxAge,
-    sp.minBudget,
-    sp.maxBudget,
-  ].some(Boolean);
+  const filtered = !!loc;
 
   function hrefWith(overrides: { page?: number; sort?: string }) {
     const params = new URLSearchParams();
-    const current: Record<string, string | undefined> = {
-      match,
-      roomies,
-      q,
-      type,
-      gender,
-      religion,
-      smoking,
-      minAge: sp.minAge,
-      maxAge: sp.maxAge,
-      minBudget: sp.minBudget,
-      maxBudget: sp.maxBudget,
-    };
-    for (const [k, v] of Object.entries(current)) if (v) params.set(k, v);
+    if (state) params.set("state", state);
+    if (area) params.set("area", area);
     const nextSort = overrides.sort ?? sort;
     if (nextSort !== "recent") params.set("sort", nextSort);
     if (overrides.page && overrides.page > 1) params.set("page", String(overrides.page));
@@ -223,15 +177,16 @@ export default async function FeedPage({
   return (
     <main>
       {me.is_paused && (
-     <div className="border-b border-amber-200 bg-amber-50">
-       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-8">
-         <p className="text-sm font-medium text-amber-900">
-           🔒 Your profile is hidden from owners.
-         </p>
-         <ShowProfileButton />
-       </div>
-     </div>
-   )}
+        <div className="border-b border-amber-200 bg-amber-50">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-8">
+            <p className="text-sm font-medium text-amber-900">
+              🔒 Your profile is hidden from owners.
+            </p>
+            <ShowProfileButton />
+          </div>
+        </div>
+      )}
+
       <section className="border-b border-slate-100 bg-linear-to-b from-brand-50 to-white">
         <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -240,7 +195,8 @@ export default async function FeedPage({
                 Find your room
               </h1>
               <p className="mt-1 text-slate-600">
-                Verified hosts with space to share. Search by area, budget and who you&apos;d like to live with.
+                Verified hosts with space to share. Pick a state, then an area, to see rooms near
+                you.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3 text-sm">
@@ -260,25 +216,7 @@ export default async function FeedPage({
           </div>
 
           <div className="mt-6">
-            <FilterBar
-              action="/feed"
-              showHousing
-              searchPlaceholder="State or area, for example Abuja or Lugbe"
-              values={{
-                match,
-                roomies,
-                q,
-                type,
-                gender,
-                religion,
-                smoking,
-                minAge: sp.minAge,
-                maxAge: sp.maxAge,
-                minBudget: sp.minBudget,
-                maxBudget: sp.maxBudget,
-                sort,
-              }}
-            />
+            <LocationFilter action="/feed" state={state} area={area} sort={sort} />
           </div>
         </div>
       </section>
@@ -294,17 +232,6 @@ export default async function FeedPage({
               <p className="text-sm font-medium text-slate-600">
                 {total} listing{total === 1 ? "" : "s"}{" "}
                 {filtered ? "match your search" : "available right now"}
-                {me.max_roomies && String(me.max_roomies) !== roomies && (
-  <>
-    {" · "}
-    <Link
-      href={`/feed?roomies=${me.max_roomies}`}
-      className="font-semibold text-brand-700 hover:text-brand-800"
-    >
-      Show listings that fit me
-    </Link>
-  </>
-)}
               </p>
               <SortTabs
                 options={sortOptions}
@@ -323,13 +250,13 @@ export default async function FeedPage({
                       href="/feed"
                       className="rounded-xl bg-brand-600 px-5 py-3 font-semibold text-white transition hover:bg-brand-700"
                     >
-                      Clear all filters
+                      Clear search
                     </Link>
                   ) : undefined
                 }
               >
                 {filtered
-                  ? "Try a wider area, a higher budget or fewer filters."
+                  ? "Try another area, or choose All areas to see the whole state."
                   : "New rooms are added all the time. Check back soon."}
               </EmptyState>
             ) : (
@@ -351,20 +278,20 @@ export default async function FeedPage({
                   return (
                     <li key={l.id} className="relative">
                       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 aspect-[4/3]">
-     {connectedOwnerIds.has(l.id) ? (
-       <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-brand-700 shadow-sm">
-         Connected ✓
-       </span>
-     ) : (
-       <div className="pointer-events-auto absolute bottom-3 right-3">
-         <SaveButton
-           listingId={l.id}
-           userId={user.id}
-           initialSaved={savedIds.has(l.id)}
-         />
-       </div>
-     )}
-   </div>
+                        {connectedListingIds.has(l.id) ? (
+                          <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-brand-700 shadow-sm">
+                            Connected ✓
+                          </span>
+                        ) : (
+                          <div className="pointer-events-auto absolute bottom-3 right-3">
+                            <SaveButton
+                              listingId={l.id}
+                              userId={user.id}
+                              initialSaved={savedIds.has(l.id)}
+                            />
+                          </div>
+                        )}
+                      </div>
                       <Link
                         href={`/listings/${l.id}`}
                         className="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-card"
@@ -402,9 +329,9 @@ export default async function FeedPage({
                             <span className="truncate">{l.area}</span>
                           </p>
                           <p className="mt-2 flex w-fit items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">
-  👥 Accepting {l.roomies_wanted} {l.roomies_wanted === 1 ? "roomie" : "roomies"}
-</p>
-<div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-500">
+                            👥 Accepting {l.roomies_wanted} {l.roomies_wanted === 1 ? "roomie" : "roomies"}
+                          </p>
+                          <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-500">
                             <span>{moveIn}</span>
                             {act && (
                               <span className="inline-flex items-center gap-1">
@@ -434,14 +361,15 @@ export default async function FeedPage({
                           </div>
 
                           <p className="mt-3 text-xs font-semibold text-brand-700">
-  Looking for: {prefLabels[p.roomie_gender_preference ?? "any"]}
-</p>
-{p.bio && (
-  <p className="mt-3 line-clamp-3 whitespace-pre-line text-sm text-slate-600">
-    {p.bio}
-  </p>
-)}
-<div className="mt-3 flex flex-wrap gap-1.5">
+                            Looking for: {prefLabels[p.roomie_gender_preference ?? "any"]}
+                          </p>
+                          {p.bio && (
+                            <p className="mt-3 line-clamp-3 whitespace-pre-line text-sm text-slate-600">
+                              {p.bio}
+                            </p>
+                          )}
+
+                          <div className="mt-3 flex flex-wrap gap-1.5">
                             {p.id_verified && (
                               <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-700">
                                 <ShieldCheckIcon className="h-3.5 w-3.5" /> ID verified
