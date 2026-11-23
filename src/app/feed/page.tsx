@@ -263,7 +263,7 @@ export default async function FeedPage({
             <FilterBar
               action="/feed"
               showHousing
-              searchPlaceholder="Area, street, estate, town or landmark"
+              searchPlaceholder="State or area, for example Abuja or Lugbe"
               values={{
                 match,
                 roomies,

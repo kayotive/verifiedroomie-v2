@@ -7,7 +7,6 @@ import { whatsappLink } from "@/lib/phone";
 import ConnectButton from "./ConnectButton";
  import HiddenProfileConnect from "./HiddenProfileConnect";
  import SaveButton from "@/components/SaveButton";
-import ListingMap from "./ListingMap";
 import OwnerListingControls from "./OwnerListingControls";
 import ReportBlock from "@/components/ReportBlock";
 import { timeAgo } from "@/components/ui";
@@ -182,7 +181,7 @@ export default async function ListingDetailsPage({
         <span className="text-base font-normal text-gray-500">per year</span>
       </p>
       <p className="text-gray-800">
-        {typeLabels[l.apartment_type ?? "other"]} · 📍 {l.place_name}, {l.area}
+        {typeLabels[l.apartment_type ?? "other"]} · 📍 {l.area}
       </p>
       {l.move_in_date && (
         <p className="text-sm text-gray-600">
@@ -268,21 +267,7 @@ export default async function ListingDetailsPage({
         </section>
       )}
 
-      {l.latitude !== null && l.longitude !== null && (
-        <section className="mt-5">
-          <h2 className="mb-2 font-semibold text-gray-900">Location</h2>
-          <ListingMap lat={l.latitude} lng={l.longitude} />
-          <a
-            href={`https://www.google.com/maps?q=${l.latitude},${l.longitude}`}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 inline-block text-sm font-semibold text-emerald-700"
-          >
-            Open in Google Maps →
-          </a>
-        </section>
-      )}
-
+      
       {!isMine && (
   <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
     <p className="font-semibold">🛡️ Stay safe</p>

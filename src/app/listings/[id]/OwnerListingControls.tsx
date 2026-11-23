@@ -177,7 +177,7 @@ export default function OwnerListingControls({
         <p className="mt-1 text-xs text-gray-500">
           {roomiesSaved
             ? "Saved ✅ Seekers now see the new number."
-            : "Saves as soon as you change it. The address and map pin can't be changed."}
+            : "Saves as soon as you change it. The area can't be changed."}
         </p>
       </div>
 

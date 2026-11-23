@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import LocationPicker from "./LocationPicker";
 import { checkListingField, checkListingCombined } from "@/lib/bioCheck";
+import { LOCATIONS, OTHER_AREA, areaText, stateLabel } from "@/lib/locations";
 
 const inputClass =
   "w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none";
@@ -64,30 +64,34 @@ export default function NewListingPage() {
     roomiesWanted: "1",
     contributionAmount: "",
     moveInDate: "",
+    stateKey: "",
+    areaChoice: "",
+    otherArea: "",
     description: "",
     houseRules: "",
-    placeName: "",
-    area: "",
   });
   const [files, setFiles] = useState<Record<string, File>>({});
-  const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Owners can only have one listing. If they already have one, send them back.
   useEffect(() => {
-     async function check() {
-       const {
-         data: { user },
-       } = await supabase.auth.getUser();
-       if (!user) return;
-       const { count } = await supabase
-         .from("listings")
-         .select("id", { count: "exact", head: true })
-         .eq("owner_id", user.id);
-       if ((count ?? 0) > 0) router.replace("/dashboard");
-     }
-     check();
-     // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, []);
+    async function check() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const { count } = await supabase
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", user.id);
+      if ((count ?? 0) > 0) router.replace("/dashboard");
+    }
+    check();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loc = LOCATIONS.find((l) => l.state === form.stateKey);
 
   function update(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -118,36 +122,50 @@ export default function NewListingPage() {
     e.preventDefault();
     setError("");
 
-    const textChecks: [string, string][] = [
-  ["Estate, street or landmark", form.placeName],
-  ["Area and city", form.area],
-  ["Short description", form.description],
-  ["House rules", form.houseRules],
-];
-for (const [fieldName, value] of textChecks) {
-  const result = checkListingField(fieldName, value);
-  if (!result.ok) {
-    setError(`${fieldName}: ${result.message}`);
-    return;
-  }
-}
-const combined = checkListingCombined(textChecks.map(([, value]) => value));
-   if (!combined.ok) {
-     setError(combined.message);
-     return;
-   }
-
-   if (Number(form.contributionAmount) > 50000000) {
-     setError("Please enter the yearly rent in naira (maximum ₦50,000,000).");
-     return;
-   }
-   const missing = REQUIRED_PHOTOS.filter((p) => !files[p.key]);
-    if (missing.length > 0) {
-      setError(`Please add photos for: ${missing.map((m) => m.label).join(", ")}.`);
+    if (!loc) {
+      setError("Please choose the state.");
       return;
     }
-    if (!pin) {
-      setError("Please drop a pin on the map to show where your apartment is.");
+    const chosenArea = form.areaChoice === OTHER_AREA ? form.otherArea.trim() : form.areaChoice;
+    if (!chosenArea) {
+      setError("Please choose the area.");
+      return;
+    }
+    if (
+      form.areaChoice === OTHER_AREA &&
+      !/^[\p{L}\p{M}][\p{L}\p{M} .'-]{1,39}$/u.test(chosenArea)
+    ) {
+      setError("The area name can only contain letters, spaces and hyphens.");
+      return;
+    }
+
+    const textChecks: [string, string][] = [
+      ["Area name", chosenArea],
+      ["Short description", form.description],
+      ["House rules", form.houseRules],
+    ];
+    for (const [fieldName, value] of textChecks) {
+      const result = checkListingField(fieldName, value);
+      if (!result.ok) {
+        setError(`${fieldName}: ${result.message}`);
+        return;
+      }
+    }
+
+    const combined = checkListingCombined(textChecks.map(([, value]) => value));
+    if (!combined.ok) {
+      setError(combined.message);
+      return;
+    }
+
+    if (Number(form.contributionAmount) > 50000000) {
+      setError("Please enter the yearly rent in naira (maximum ₦50,000,000).");
+      return;
+    }
+
+    const missing = REQUIRED_PHOTOS.filter((p) => !files[p.key]);
+    if (missing.length > 0) {
+      setError(`Please add photos for: ${missing.map((m) => m.label).join(", ")}.`);
       return;
     }
 
@@ -172,10 +190,12 @@ const combined = checkListingCombined(textChecks.map(([, value]) => value));
         move_in_date: form.moveInDate,
         description: form.description,
         house_rules: form.houseRules,
-        place_name: form.placeName,
-        area: form.area,
-        latitude: pin.lat,
-        longitude: pin.lng,
+        // The capital is kept in this field so searching for the city finds the listing
+        place_name: loc.capital,
+        area: areaText(loc, chosenArea),
+        state: loc.state,
+        latitude: null,
+        longitude: null,
         status: "draft",
       })
       .select("id")
@@ -254,15 +274,16 @@ const combined = checkListingCombined(textChecks.map(([, value]) => value));
         </div>
 
         <div>
-  <label className={labelClass}>How many roomies are you accepting?</label>
-  <select name="roomiesWanted" required value={form.roomiesWanted} onChange={update} className={inputClass}>
-    <option value="1">1 roomie</option>
-    <option value="2">2 roomies</option>
-    <option value="3">3 roomies</option>
-  </select>
-  <p className="mt-1 text-xs text-gray-500">You can change this later if your needs change.</p>
-</div>
-<div>
+          <label className={labelClass}>How many roomies are you accepting?</label>
+          <select name="roomiesWanted" required value={form.roomiesWanted} onChange={update} className={inputClass}>
+            <option value="1">1 roomie</option>
+            <option value="2">2 roomies</option>
+            <option value="3">3 roomies</option>
+          </select>
+          <p className="mt-1 text-xs text-gray-500">You can change this later if your needs change.</p>
+        </div>
+
+        <div>
           <label className={labelClass}>Contribution Amount (₦ per year)</label>
           <input name="contributionAmount" type="number" min={1} required placeholder="450000" value={form.contributionAmount} onChange={update} className={inputClass} />
         </div>
@@ -273,26 +294,59 @@ const combined = checkListingCombined(textChecks.map(([, value]) => value));
         </div>
 
         <div>
-          <label className={labelClass}>Estate, Street or Landmark</label>
-          <input name="placeName" required placeholder="Living Faith Junction" value={form.placeName} onChange={update} className={inputClass} />
+          <label className={labelClass}>State</label>
+          <select
+            name="stateKey"
+            required
+            value={form.stateKey}
+            onChange={(e) =>
+              setForm({ ...form, stateKey: e.target.value, areaChoice: "", otherArea: "" })
+            }
+            className={inputClass}
+          >
+            <option value="">Select the state...</option>
+            {LOCATIONS.map((l) => (
+              <option key={l.state} value={l.state}>
+                {stateLabel(l)}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
-          <label className={labelClass}>Area and City</label>
-          <input name="area" required placeholder="Jikwoyi, Abuja" value={form.area} onChange={update} className={inputClass} />
-        </div>
-
-        <div>
-          <label className={labelClass}>Pin your apartment on the map</label>
-          <LocationPicker onChange={setPin} />
-          {pin ? (
-            <p className="mt-1 text-xs text-emerald-700">
-              Pin placed. The location is locked once you publish.
-            </p>
-          ) : (
-            <p className="mt-1 text-xs text-gray-500">No pin placed yet.</p>
+          <label className={labelClass}>Area</label>
+          <select
+            name="areaChoice"
+            required
+            disabled={!loc}
+            value={form.areaChoice}
+            onChange={update}
+            className={`${inputClass} disabled:bg-gray-100 disabled:text-gray-500`}
+          >
+            <option value="">{loc ? "Select the area..." : "Choose a state first"}</option>
+            {loc?.areas.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+            {loc && <option value={OTHER_AREA}>Other (not on the list)</option>}
+          </select>
+          {form.areaChoice === OTHER_AREA && (
+            <input
+              name="otherArea"
+              required
+              maxLength={40}
+              placeholder="Type the name of your area"
+              value={form.otherArea}
+              onChange={update}
+              className={`${inputClass} mt-2`}
+            />
           )}
+          <p className="mt-1 text-xs text-gray-500">
+            People search listings by this area. It can&apos;t be changed after you publish.
+          </p>
         </div>
+
         <div>
           <label className={labelClass}>Short Description</label>
           <textarea name="description" required rows={3} placeholder="Looking for a neat, responsible roommate." value={form.description} onChange={update} className={inputClass} />
