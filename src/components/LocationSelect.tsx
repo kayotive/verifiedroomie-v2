@@ -21,14 +21,14 @@ export default function LocationSelect({
   return (
     <>
       <div>
-        <label className={labelClass}>Where are you looking? (State)</label>
+        <label className={labelClass}>Where are you looking? (City or town)</label>
         <select
           required
           value={state}
           onChange={(e) => onChange(e.target.value, "")}
           className={inputClass}
         >
-          <option value="">Select the state...</option>
+          <option value="">Select the city or town...</option>
           {LOCATIONS.map((l) => (
             <option key={l.state} value={l.state}>
               {stateLabel(l)}
@@ -41,12 +41,12 @@ export default function LocationSelect({
         <label className={labelClass}>Area</label>
         <select
           disabled={!loc}
-          value={area}
+          value={loc?.areas.includes(area) ? area : ""}
           onChange={(e) => onChange(state, e.target.value)}
           className={`${inputClass} disabled:bg-gray-100 disabled:text-gray-500`}
         >
           <option value="">
-            {loc ? `Anywhere in ${loc.display ?? loc.state}` : "Choose a state first"}
+            {loc ? `Anywhere in ${stateLabel(loc)}` : "Choose a city or town first"}
           </option>
           {loc?.areas.map((a) => (
             <option key={a} value={a}>

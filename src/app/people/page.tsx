@@ -161,7 +161,7 @@ export default async function PeoplePage({
                 People looking for a place
               </h1>
               <p className="mt-1 text-slate-600">
-                Find a housemate for your space. Pick a state, then an area, to see who is looking
+                Find a housemate for your space. Pick a city or town, then an area, to see who is looking
                 there.
               </p>
             </div>

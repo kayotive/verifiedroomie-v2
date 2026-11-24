@@ -38,7 +38,7 @@ export default function LocationFilter({
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:items-end">
         <div className="lg:col-span-4">
           <label htmlFor="f-state" className={label}>
-            State
+            City or town
           </label>
           <select
             id="f-state"
@@ -50,7 +50,7 @@ export default function LocationFilter({
             }}
             className={field}
           >
-            <option value="">Select a state</option>
+            <option value="">Select a city or town</option>
             {LOCATIONS.map((l) => (
               <option key={l.state} value={l.state}>
                 {stateLabel(l)}

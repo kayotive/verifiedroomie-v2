@@ -123,7 +123,7 @@ export default function NewListingPage() {
     setError("");
 
     if (!loc) {
-      setError("Please choose the state.");
+      setError("Please choose the city or town.");
       return;
     }
     const chosenArea = form.areaChoice === OTHER_AREA ? form.otherArea.trim() : form.areaChoice;
@@ -294,7 +294,7 @@ export default function NewListingPage() {
         </div>
 
         <div>
-          <label className={labelClass}>State</label>
+          <label className={labelClass}>City or town</label>
           <select
             name="stateKey"
             required
@@ -304,7 +304,7 @@ export default function NewListingPage() {
             }
             className={inputClass}
           >
-            <option value="">Select the state...</option>
+            <option value="">Select the city or town...</option>
             {LOCATIONS.map((l) => (
               <option key={l.state} value={l.state}>
                 {stateLabel(l)}
@@ -323,7 +323,7 @@ export default function NewListingPage() {
             onChange={update}
             className={`${inputClass} disabled:bg-gray-100 disabled:text-gray-500`}
           >
-            <option value="">{loc ? "Select the area..." : "Choose a state first"}</option>
+            <option value="">{loc ? "Select the area..." : "Choose a city or town first"}</option>
             {loc?.areas.map((a) => (
               <option key={a} value={a}>
                 {a}

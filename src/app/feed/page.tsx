@@ -195,7 +195,7 @@ export default async function FeedPage({
                 Find your room
               </h1>
               <p className="mt-1 text-slate-600">
-                Verified hosts with space to share. Pick a state, then an area, to see rooms near
+                Verified hosts with space to share. Pick a city or town, then an area, to see rooms near
                 you.
               </p>
             </div>
@@ -268,7 +268,7 @@ export default async function FeedPage({
                 }
               >
                 {filtered
-                  ? "Try another area, or choose All areas to see the whole state."
+                  ? "Try another area, or choose All areas to see the whole city or town."
                   : "New rooms are added all the time. Check back soon."}
               </EmptyState>
             ) : (
