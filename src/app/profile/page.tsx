@@ -18,9 +18,10 @@ const occupationLabels: Record<string, string> = {
 const smokingLabels: Record<string, string> = { non_smoker: "Non-smoker", smoker: "Smoker" };
 const prefLabels: Record<string, string> = { male: "Male roomie", female: "Female roomie", any: "Any gender" };
 const roomiesLabels: Record<number, string> = {
-  1: "Wants to be the only roomie",
-  2: "Okay with up to 2 roomies",
-  3: "Okay with up to 3 roomies",
+  1: "Wants to be the only roomie (two of us)",
+  2: "Okay sharing with one other roomie (three of us)",
+  // Old saved value from before the limit of 3 people. Shown as the maximum.
+  3: "Okay sharing with one other roomie (three of us)",
 };
 
 export default async function ProfilePage() {
