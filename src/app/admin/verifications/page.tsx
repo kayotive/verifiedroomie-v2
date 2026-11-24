@@ -22,7 +22,7 @@ type PendingId = {
   document_type: string;
   document_path: string;
   created_at: string;
-  profiles: { full_name: string };
+  profiles: { full_name: string; avatar_url: string | null };
 };
 type ListingRow = {
   id: string;
@@ -48,7 +48,7 @@ export default async function AdminVerificationsPage() {
 
   const { data: idRows } = await supabase
     .from("id_verifications")
-    .select("id, document_type, document_path, created_at, profiles(full_name)")
+    .select("id, document_type, document_path, created_at, profiles(full_name, avatar_url)")
     .eq("status", "pending")
     .order("created_at", { ascending: true });
   const pending = (idRows ?? []) as unknown as PendingId[];
@@ -85,7 +85,21 @@ export default async function AdminVerificationsPage() {
         <ul className="mb-6 flex flex-col gap-4">
           {docs.map((d) => (
             <li key={d.id} className="rounded-2xl border border-gray-200 p-3">
-              <p className="font-semibold text-gray-900">{d.profiles.full_name || "New user"}</p>
+              <div className="flex flex-col items-start gap-1">
+  {d.profiles.avatar_url ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={d.profiles.avatar_url}
+      alt=""
+      className="h-14 w-14 rounded-full border border-gray-200 object-cover"
+    />
+  ) : (
+    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-[10px] text-gray-400">
+      No photo
+    </div>
+  )}
+  <p className="font-semibold text-gray-900">{d.profiles.full_name || "New user"}</p>
+</div>
               <p className="text-sm text-gray-600">{docLabels[d.document_type]}</p>
               {d.url ? (
                 d.document_path.toLowerCase().endsWith(".pdf") ? (
