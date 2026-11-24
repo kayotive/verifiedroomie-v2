@@ -19,6 +19,9 @@ const icons: Record<string, string> = {
   request_received: "📩",
   request_accepted: "🎉",
   request_declined: "🚫",
+
+  id_verified: "✅",
+  id_rejected: "⚠️",
 };
 
 export default function NotificationList({ items }: { items: NotificationItem[] }) {
