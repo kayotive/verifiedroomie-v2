@@ -365,7 +365,7 @@ export default function NewListingPage() {
         <h2 className="mt-2 text-lg font-semibold text-gray-900">
   Apartment Photos{" "}
   <span className="text-sm font-normal text-gray-500">
-    (for self-contained, you can upload the same photo for living room and bedroom)
+    (for a self-contained apartment, you can use the same photo as living room and bedroom)
   </span>
 </h2>
         {REQUIRED_PHOTOS.map((p) => (
