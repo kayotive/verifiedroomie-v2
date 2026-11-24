@@ -170,9 +170,8 @@ export default function OwnerListingControls({
           disabled={loading}
           className="w-full rounded-xl border border-gray-300 px-3 py-2 text-gray-900 focus:border-emerald-600 focus:outline-none disabled:opacity-60"
         >
-          <option value="1">1 roomie</option>
-          <option value="2">2 roomies</option>
-          <option value="3">3 roomies</option>
+          <option value="1">Accepting 1 roomie (2 occupants)</option>
+          <option value="2">Accepting 2 roomies (3 occupants)</option>
         </select>
         <p className="mt-1 text-xs text-gray-500">
           {roomiesSaved

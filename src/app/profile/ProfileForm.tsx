@@ -253,9 +253,8 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
               className={inputClass}
             >
               <option value="">Select...</option>
-              <option value="1">I want to be the only roomie</option>
-              <option value="2">I can share with 1 other roomie (2 of us)</option>
-              <option value="3">I can share with 2 other roomies (3 of us)</option>
+              <option value="1">I want to be the only roomie (two of us)</option>
+              <option value="2">I can share with one other roomie (three of us)</option>
             </select>
           </div>
 
