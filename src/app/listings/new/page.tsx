@@ -362,7 +362,12 @@ export default function NewListingPage() {
           <textarea name="houseRules" required rows={3} placeholder={"No smoking.\nNo loud parties.\nVisitors allowed only on weekends."} value={form.houseRules} onChange={update} className={inputClass} />
         </div>
 
-        <h2 className="mt-2 text-lg font-semibold text-gray-900">Apartment Photos</h2>
+        <h2 className="mt-2 text-lg font-semibold text-gray-900">
+  Apartment Photos{" "}
+  <span className="text-sm font-normal text-gray-500">
+    (for self-contained, you can upload the same photo for living room and bedroom)
+  </span>
+</h2>
         {REQUIRED_PHOTOS.map((p) => (
           <FileField key={p.key} label={p.label} required accept="image/jpeg,image/png,image/webp" file={files[p.key]} onPick={pickFile(p.key, "photo")} />
         ))}
