@@ -34,7 +34,7 @@ export default async function ProfilePage() {
   const { data: p } = await supabase
     .from("profiles")
     .select(
-       "full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, looking_state, looking_area, is_paused, paused_reason, user_type, id_verified, phone_verified, is_admin"
+       "full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, looking_state, looking_area, is_paused, paused_reason, user_type, id_verified, phone_verified, is_admin, photo_status"
     )
     .eq("id", user.id)
     .single();
@@ -60,6 +60,15 @@ export default async function ProfilePage() {
         ← Back
       </Link>
       <h1 className="mb-4 mt-2 text-2xl font-bold text-gray-900">My profile</h1>
+      {p.photo_status === "flagged" && (
+        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <p className="font-semibold">📷 Please change your profile photo</p>
+          <p className="mt-1">
+            Your photo does not meet our rules. Use a clear photo of yourself, taken with your camera
+            or picked from your gallery, within 24 hours, or your account may be suspended.
+          </p>
+        </div>
+      )}
 
       <section className="mb-6 rounded-2xl border border-gray-200 bg-gray-50 p-4">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">

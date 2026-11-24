@@ -108,7 +108,8 @@ export default async function PeoplePage({
     )
     .eq("user_type", "seeker")
     .eq("is_suspended", false)
-    .eq("is_paused", false);
+    .eq("is_paused", false)
+    .neq("photo_status", "flagged");
 
   // Seekers looking in this state, and in this area (or anywhere in the state)
   if (loc) query = query.eq("looking_state", loc.state);

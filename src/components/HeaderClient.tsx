@@ -256,6 +256,9 @@ export default function HeaderClient({ viewer }: { viewer: Viewer | null }) {
                         <Link href="/admin/reports" onClick={close} className={itemClass}>
                           Admin: reports
                         </Link>
+                        <Link href="/admin/photos" onClick={close} className={itemClass}>
+                          Admin: photos
+                        </Link>
                       </>
                     )}
                   </div>

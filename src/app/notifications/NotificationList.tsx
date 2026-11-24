@@ -22,6 +22,7 @@ const icons: Record<string, string> = {
 
   id_verified: "✅",
   id_rejected: "⚠️",
+  photo_flagged: "📷",
 };
 
 export default function NotificationList({ items }: { items: NotificationItem[] }) {
