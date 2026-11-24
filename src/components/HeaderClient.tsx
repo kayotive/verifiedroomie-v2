@@ -74,17 +74,19 @@ export default function HeaderClient({ viewer }: { viewer: Viewer | null }) {
       { href: "/#pricing", label: "Pricing" },
       { href: "/safety", label: "Safety tips" },
     ];
-  } else if (!limited && viewer.role === "owner") {
+ } else if (!limited && viewer.role === "owner") {
     links = [
       { href: "/dashboard", label: "Dashboard" },
       { href: "/people", label: "People" },
       { href: "/requests", label: "Requests", badge: viewer.pendingRequests },
+      { href: "/safety", label: "Safety tips" },
     ];
   } else if (!limited) {
     links = [
       { href: "/feed", label: "Listings" },
       { href: "/saved", label: "Saved" },
       { href: "/requests", label: "Requests", badge: viewer.pendingRequests },
+      { href: "/safety", label: "Safety tips" },
     ];
   }
 
