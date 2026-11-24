@@ -171,10 +171,32 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
             <span className="text-sm text-gray-400">No photo</span>
           )}
         </div>
-        <label className="cursor-pointer rounded-xl border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">
-          Change photo
-          <input type="file" accept="image/*" onChange={onPick} className="hidden" />
-        </label>
+        <div className="flex flex-wrap justify-center gap-2">
+          <label className="cursor-pointer rounded-xl border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">
+            📷 Take a photo
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="user"
+              onChange={onPick}
+              className="hidden"
+            />
+          </label>
+          <label className="cursor-pointer rounded-xl border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">
+            🖼️ Choose from gallery
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={onPick}
+              className="hidden"
+            />
+          </label>
+        </div>
+        <p className="max-w-xs text-center text-xs text-gray-500">
+          Use a clear photo of yourself, taken with your camera or picked from your gallery. Photos of
+          houses, objects, documents or text (including phone numbers) aren&apos;t allowed, and your
+          profile may be suspended.
+        </p>
       </div>
 
       <div>
