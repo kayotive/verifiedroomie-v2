@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import LocationSelect from "@/components/LocationSelect";
+import PhotoPicker from "@/components/PhotoPicker";
 
 type Status = "owner" | "seeker";
 
@@ -19,13 +20,7 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  function onPick(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    if (!f.type.startsWith("image/")) {
-      setError("Please choose an image file.");
-      return;
-    }
+  function onPhoto(f: File) {
     if (f.size > 5 * 1024 * 1024) {
       setError("Photo must be smaller than 5 MB.");
       return;
@@ -125,32 +120,7 @@ export default function OnboardingPage() {
             <span className="text-sm text-gray-400">No photo</span>
           )}
         </div>
-        <div className="flex flex-wrap justify-center gap-2">
-          <label className="cursor-pointer rounded-xl border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">
-            📷 Take a photo
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              capture="user"
-              onChange={onPick}
-              className="hidden"
-            />
-          </label>
-          <label className="cursor-pointer rounded-xl border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">
-            🖼️ Choose from gallery
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={onPick}
-              className="hidden"
-            />
-          </label>
-        </div>
-        <p className="max-w-xs text-center text-xs text-gray-500">
-          Use a clear photo of yourself, taken with your camera or picked from your gallery. Photos of
-          houses, objects, documents or text (including phone numbers) aren&apos;t allowed, and your
-          profile may be suspended.
-        </p>
+        <PhotoPicker onFile={onPhoto} onError={setError} />
       </div>
 
       <div className="flex flex-col gap-3">

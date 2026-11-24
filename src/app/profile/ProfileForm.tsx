@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { checkBio } from "@/lib/bioCheck";
 import LocationSelect from "@/components/LocationSelect";
+import PhotoPicker from "@/components/PhotoPicker";
 
 type Initial = {
   fullName: string;
@@ -55,13 +56,7 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function onPick(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    if (!f.type.startsWith("image/")) {
-      setError("Please choose an image file.");
-      return;
-    }
+  function onPhoto(f: File) {
     if (f.size > 5 * 1024 * 1024) {
       setError("Photo must be smaller than 5 MB.");
       return;
@@ -171,32 +166,12 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
             <span className="text-sm text-gray-400">No photo</span>
           )}
         </div>
-        <div className="flex flex-wrap justify-center gap-2">
-          <label className="cursor-pointer rounded-xl border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">
-            📷 Take a photo
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              capture="user"
-              onChange={onPick}
-              className="hidden"
-            />
-          </label>
-          <label className="cursor-pointer rounded-xl border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">
-            🖼️ Choose from gallery
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={onPick}
-              className="hidden"
-            />
-          </label>
-        </div>
-        <p className="max-w-xs text-center text-xs text-gray-500">
-          Use a clear photo of yourself, taken with your camera or picked from your gallery. Photos of
-          houses, objects, documents or text (including phone numbers) aren&apos;t allowed, and your
-          profile may be suspended.
-        </p>
+        <PhotoPicker onFile={onPhoto} onError={setError} />
+        {file && (
+          <p className="text-xs font-semibold text-emerald-700">
+            New photo selected. Tap &quot;Save changes&quot; below to keep it.
+          </p>
+        )}
       </div>
 
       <div>
