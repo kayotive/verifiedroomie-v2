@@ -47,7 +47,7 @@ begin
           then 'Your ID was not approved. Reason: ' || v_reason
         else 'Your ID was not approved.'
       end,
-      null,
+      '/verify',
       now()
     );
   end if;
