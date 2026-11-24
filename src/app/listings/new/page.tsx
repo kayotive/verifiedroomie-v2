@@ -276,9 +276,8 @@ export default function NewListingPage() {
         <div>
           <label className={labelClass}>How many roomies are you accepting?</label>
           <select name="roomiesWanted" required value={form.roomiesWanted} onChange={update} className={inputClass}>
-            <option value="1">1 roomie</option>
-            <option value="2">2 roomies</option>
-            <option value="3">3 roomies</option>
+            <option value="1">Accepting 1 roomie (2 occupants)</option>
+            <option value="2">Accepting 2 roomies (3 occupants)</option>
           </select>
           <p className="mt-1 text-xs text-gray-500">You can change this later if your needs change.</p>
         </div>
