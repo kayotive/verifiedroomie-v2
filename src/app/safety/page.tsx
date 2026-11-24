@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Safety tips",
@@ -12,7 +13,7 @@ const sections = [
     icon: "🔎",
     title: "Before you connect",
     tips: [
-      "Read the full profile or listing, and check that the bio, photos, location pin and price all make sense together.",
+      "Read the full profile or listing, and check that the bio, photos, area and price all make sense together.",
       "ID verified and Apartment verified badges mean our team reviewed documents. They help, but they don't replace your own checks.",
       "Be careful with rent that is far lower than similar places in the same area. If it sounds too good to be true, it usually is.",
       "Phone numbers are shared only after a request is accepted, so you can take your time getting to know a profile first.",
@@ -24,7 +25,7 @@ const sections = [
     tips: [
       "Meet in daylight, at the apartment or in a public place, for the first meeting.",
       "Tell a friend or family member where you're going, who you're meeting and when you'll be back. If you can, bring someone with you.",
-      "Check that the person matches their profile photo, and that the apartment matches the photos, the address and the map pin.",
+      "Check that the person matches their profile photo, and that the apartment matches the listing photos and the area and landmarks described.",
       "If you are moving in, ask to meet the other people who live there and ask how bills and chores are shared.",
       "Trust your instincts. If you feel pressured or uncomfortable, leave.",
     ],
@@ -74,11 +75,16 @@ const sections = [
   },
 ];
 
-export default function SafetyPage() {
+export default async function SafetyPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <main className="mx-auto max-w-3xl px-5 py-8 sm:px-8">
-      <Link href="/dashboard" className="text-sm font-semibold text-brand-700">
-        ← Back
+      <Link href={user ? "/dashboard" : "/"} className="text-sm font-semibold text-brand-700">
+        {user ? "← Back" : "← Home"}
       </Link>
 
       <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">

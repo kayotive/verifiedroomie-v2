@@ -38,6 +38,7 @@ export async function proxy(request: NextRequest) {
     path === "/login" ||
     path === "/register" ||
     path === "/forgot-password" ||
+    path === "/safety" ||
     path.startsWith("/auth/");
 
   if (!user && !isPublic) {

@@ -72,6 +72,7 @@ export default function HeaderClient({ viewer }: { viewer: Viewer | null }) {
       { href: "/#how-it-works", label: "How it works" },
       { href: "/#verification", label: "Verification" },
       { href: "/#pricing", label: "Pricing" },
+      { href: "/safety", label: "Safety tips" },
     ];
   } else if (!limited && viewer.role === "owner") {
     links = [
