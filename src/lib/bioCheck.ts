@@ -3,7 +3,13 @@
 
 export type BioCheck = { ok: true } | { ok: false; message: string };
 
-const MAX_NUMBER_WORDS = 1; // strict fields (bio, name): 2 or more spelled-out numbers is rejected
+// How many spelled-out numbers are allowed.
+//  tight: this many in a row (with only commas or spaces between) are fine; more is rejected
+//  loose: this many with up to two ordinary words between each are fine; more is rejected
+//  total: this many in the whole text are fine; more is rejected
+const BIO_LIMITS = { tight: 2, loose: 4, total: 6 };
+const LISTING_LIMITS = { tight: 2, loose: 5, total: 8 };
+const LOOSE_GAP_WORDS = 2;
 
 const UNITS = "one|two|three|four|five|six|seven|eight|nine";
 const TENS = "twenty|thirty|forty|fourty|fifty|sixty|seventy|eighty|ninety";
@@ -100,9 +106,70 @@ function looksLikePhone(t: string): boolean {
   return /(?:234|0)\d{9,}/.test(d);
 }
 
+type NumberHit = { start: number; end: number };
+
+function numberHits(t: string): NumberHit[] {
+  const hits: NumberHit[] = [];
+  const re = new RegExp(NUMBER_WORD_SOURCE, "g");
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(t)) !== null) {
+    hits.push({ start: m.index, end: m.index + m[0].length });
+  }
+  return hits;
+}
+
+// The longest run of spelled-out numbers with at most `maxGapWords` ordinary words between each
+function longestChain(t: string, hits: NumberHit[], maxGapWords: number): number {
+  let best = 0;
+  let current = 0;
+  for (let i = 0; i < hits.length; i++) {
+    if (i === 0) {
+      current = 1;
+    } else {
+      const between = t.slice(hits[i - 1].end, hits[i].start);
+      const words = (between.match(/[a-z']+/g) ?? []).length;
+      current = words <= maxGapWords ? current + 1 : 1;
+    }
+    if (current > best) best = current;
+  }
+  return best;
+}
+
+// Spelled-out numbers are fine in normal sentences ("a nine to five", "just one roommate").
+// They are rejected when they follow each other, are spread through a sentence with
+// filler words between them, or when there are simply too many.
+function checkSpelled(t: string, limits: { tight: number; loose: number; total: number }): BioCheck {
+  const hits = numberHits(t);
+  if (hits.length <= 1) return { ok: true };
+
+  if (longestChain(t, hits, 0) > limits.tight) {
+    return {
+      ok: false,
+      message:
+        "Spelled-out numbers can't follow each other (for example “zero eight one”). Short phrases like “nine to five” or “one bedroom” are fine.",
+    };
+  }
+  if (longestChain(t, hits, LOOSE_GAP_WORDS) > limits.loose) {
+    return {
+      ok: false,
+      message:
+        "Spelled-out numbers can't be spread through a sentence with other words in between. Short phrases like “nine to five” or “one bedroom” are fine.",
+    };
+  }
+  if (hits.length > limits.total) {
+    return {
+      ok: false,
+      message:
+        "There are too many spelled-out numbers here. Short phrases like “nine to five” or “one bedroom” are fine, but please use fewer.",
+    };
+  }
+  return { ok: true };
+}
+
 /**
- * Strict check for the bio and the full name.
- * Any digit is rejected, 2 or more spelled-out numbers are rejected, and so is any contact phrase.
+ * Check for the bio ("about me") and the full name.
+ * Digits are rejected, contact phrases are rejected, and spelled-out numbers are
+ * allowed in normal sentences but not in a row or spread out to hide a number.
  */
 export function checkBio(raw: string): BioCheck {
   const t = normalize(raw);
@@ -118,38 +185,15 @@ export function checkBio(raw: string): BioCheck {
   const contact = checkContact(t);
   if (!contact.ok) return contact;
 
-  const found = t.match(new RegExp(NUMBER_WORD_SOURCE, "g")) ?? [];
-  if (found.length > MAX_NUMBER_WORDS) {
-    return { ok: false, message: "Invalid characters entered." };
-  }
-
-  return { ok: true };
+  return checkSpelled(t, BIO_LIMITS);
 }
 
-/**
- * Check for listing text (description, house rules, place name, area).
- * Numbers are allowed ("2 bedroom", "24 hours light", rent amounts),
- * but phone numbers and contact phrases are not.
- */
+// Kept so older imports keep working
 export function checkListingText(raw: string): BioCheck {
-  const t = normalize(raw);
-
-  const contact = checkContact(t);
-  if (!contact.ok) return contact;
-
-  if (looksLikePhone(t)) {
-    return {
-      ok: false,
-      message:
-        "Phone numbers can't be added here. Contact details are shared automatically once people connect.",
-    };
-  }
-
-  return { ok: true };
+  return checkListingField("Short description", raw);
 }
-// ---------- Listing form: stricter, with a limit across all fields ----------
 
-const MAX_LISTING_NUMBERS = 6; // digits + spelled-out numbers allowed across the whole listing text
+// ---------- Listing form ----------
 
 function countNumberTokens(t: string): number {
   const digits = (t.match(/\p{Nd}/gu) ?? []).length;
@@ -194,16 +238,16 @@ export function checkListingField(label: string, raw: string): BioCheck {
     };
   }
 
-  return { ok: true };
+  return checkSpelled(t, LISTING_LIMITS);
 }
 
 /**
  * All listing text together: stops a phone number being split into pieces
- * across the estate name, area, description and house rules.
+ * across the area, description and house rules.
  */
 export function checkListingCombined(values: string[]): BioCheck {
   const total = values.reduce((sum, v) => sum + countNumberTokens(normalize(v)), 0);
-  if (total > MAX_LISTING_NUMBERS) {
+  if (total > LISTING_LIMITS.total) {
     return {
       ok: false,
       message:
