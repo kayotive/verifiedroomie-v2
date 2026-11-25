@@ -348,7 +348,7 @@ export default function NewListingPage() {
   <label className={labelClass}>
     Short Description{" "}
     <span className="font-normal text-gray-500">
-      (tell seekers about your apartment, area, landmark, etc.)
+      (tell seekers about your apartment, area, landmark, and how many roomies you are looking for)
     </span>
   </label>
   <textarea name="description" required rows={3} placeholder="Looking for a neat, responsible roommate." value={form.description} onChange={update} className={inputClass} />
