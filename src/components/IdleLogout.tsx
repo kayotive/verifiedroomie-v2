@@ -16,12 +16,29 @@ function readLast(fallback: number) {
   }
 }
 
+// The server cannot read localStorage, so the same time is also kept in a cookie.
+// The server checks it when the person comes back, even after the browser was closed.
+const COOKIE = "vr_last_active";
+
+function setCookie(t: number | null) {
+  try {
+    const secure = window.location.protocol === "https:" ? "; secure" : "";
+    document.cookie =
+      t === null
+        ? `${COOKIE}=; path=/; max-age=0; samesite=lax${secure}`
+        : `${COOKIE}=${t}; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax${secure}`;
+  } catch {
+    // ignore if cookies are blocked
+  }
+}
+
 function writeLast(t: number) {
   try {
     localStorage.setItem(KEY, String(t));
   } catch {
     // ignore if storage is blocked
   }
+  setCookie(t);
 }
 
 export default function IdleLogout() {
@@ -90,6 +107,7 @@ export default function IdleLogout() {
       } catch {
         // ignore
       }
+      setCookie(null);
       window.location.assign("/login");
     };
 

@@ -4,6 +4,11 @@ import { NextResponse, type NextRequest } from "next/server";
 // Record "last active" at most once every 10 minutes per person
 const ACTIVE_REFRESH_MS = 10 * 60 * 1000;
 
+// If the person has been away longer than this (same 3 minutes as the idle logout,
+// plus 1 minute of safety for phone clocks), they are signed out when they come back.
+const AWAY_MS = 3 * 60 * 1000 + 60 * 1000;
+const LAST_ACTIVE_COOKIE = "vr_last_active";
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -29,8 +34,22 @@ export async function proxy(request: NextRequest) {
   );
 
   const {
-    data: { user },
+    data: { user: foundUser },
   } = await supabase.auth.getUser();
+  let user = foundUser;
+
+  // Closed the browser without logging out? If they were away too long, sign them out now,
+  // before any page is shown.
+  if (user) {
+    const cookieTime = Number(request.cookies.get(LAST_ACTIVE_COOKIE)?.value);
+    const signedInAt = user.last_sign_in_at ? Date.parse(user.last_sign_in_at) : 0;
+    const lastSeen = Math.max(Number.isFinite(cookieTime) ? cookieTime : 0, signedInAt);
+    if (lastSeen > 0 && Date.now() - lastSeen > AWAY_MS) {
+      await supabase.auth.signOut({ scope: "local" });
+      response.cookies.set(LAST_ACTIVE_COOKIE, "", { path: "/", maxAge: 0 });
+      user = null;
+    }
+  }
 
   const path = request.nextUrl.pathname;
   const isPublic =
@@ -44,7 +63,10 @@ export async function proxy(request: NextRequest) {
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    return NextResponse.redirect(url);
+    const redirect = NextResponse.redirect(url);
+    // keep the "signed out" cookie changes on the redirect too
+    response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+    return redirect;
   }
 
   if (user && !isPublic && path !== "/suspended") {
