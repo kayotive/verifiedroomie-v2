@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { hashImage } from "@/lib/imageHash";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { checkListingField, checkListingCombined } from "@/lib/bioCheck";
@@ -218,9 +219,17 @@ export default function NewListingPage() {
           .upload(path, file, { contentType: file.type });
         if (uploadError) throw uploadError;
 
+        const hashes = kind === "photo" ? await hashImage(file) : null;
         const { error: mediaError } = await supabase
           .from("listing_media")
-          .insert({ listing_id: listing.id, kind, category: key, path });
+          .insert({
+            listing_id: listing.id,
+            kind,
+            category: key,
+            path,
+            photo_hash: hashes?.exact ?? null,
+            visual_hash: hashes?.visual ?? null,
+          });
         if (mediaError) throw mediaError;
       }
 

@@ -76,7 +76,10 @@ export default async function AdminVerificationsPage() {
       <Link href="/dashboard" className="text-sm font-semibold text-emerald-700">
         ← Back
       </Link>
-      <h1 className="mb-4 mt-2 text-2xl font-bold text-gray-900">Admin: verifications</h1>
+      <h1 className="mb-1 mt-2 text-2xl font-bold text-gray-900">Admin: verifications</h1>
+<Link href="/admin/duplicates" className="mb-4 inline-block text-sm font-semibold text-emerald-700">
+  Check for duplicate listings →
+</Link>
 
       <h2 className="mb-2 font-semibold text-gray-900">ID documents waiting ({docs.length})</h2>
       {docs.length === 0 ? (
