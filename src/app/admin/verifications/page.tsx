@@ -138,7 +138,7 @@ export default async function AdminVerificationsPage() {
                 {l.place_name} · owner: {l.profiles.full_name || "New user"}
               </p>
               <div className="mt-2 flex items-center gap-4">
-                <Link href={`/listings/${l.id}`} className="text-sm font-semibold text-emerald-700">
+                <Link href={`/listings/${l.id}?from=verifications`} className="text-sm font-semibold text-emerald-700">
                   Open listing
                 </Link>
                 <ApartmentVerifyButton listingId={l.id} />

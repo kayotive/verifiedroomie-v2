@@ -75,10 +75,13 @@ last_confirmed_at: string;
 
 export default async function ListingDetailsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const { id } = await params;
+  const { from } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -172,9 +175,15 @@ export default async function ListingDetailsPage({
 
   return (
     <main className="mx-auto max-w-md px-4 py-6">
-      <Link href={isMine ? "/dashboard" : "/feed"} className="text-sm font-semibold text-emerald-700">
-        ← Back
-      </Link>
+      {from === "verifications" ? (
+        <Link href="/admin/verifications" className="text-sm font-semibold text-emerald-700">
+          ← Back to verifications
+        </Link>
+      ) : (
+        <Link href={isMine ? "/dashboard" : "/feed"} className="text-sm font-semibold text-emerald-700">
+          ← Back
+        </Link>
+      )}
 
       <p className="mt-3 text-2xl font-bold text-gray-900">
         ₦{l.contribution_amount?.toLocaleString("en-NG")}{" "}
