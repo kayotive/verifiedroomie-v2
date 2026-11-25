@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Logo from "@/components/Logo";
+import ContactLinks from "@/components/ContactLinks";
 import {
   BriefcaseIcon,
   CameraIcon,
@@ -448,6 +449,11 @@ export default async function HomePage() {
             {!loggedIn && <Link href="/login" className="hover:text-brand-700">Log in</Link>}
             {!loggedIn && <Link href="/register" className="hover:text-brand-700">Create account</Link>}
           </nav>
+        </div>
+        <div className="border-t border-slate-100">
+          <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8">
+            <ContactLinks />
+          </div>
         </div>
         <p className="border-t border-slate-100 px-5 py-5 text-center text-xs text-slate-500">
           © 2026 VerifiedRoomie. All rights reserved.
