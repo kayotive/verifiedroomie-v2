@@ -10,6 +10,9 @@ const AWAY_MS = 3 * 60 * 1000 + 60 * 1000;
 const LAST_ACTIVE_COOKIE = "vr_last_active";
 
 export async function proxy(request: NextRequest) {
+  // The email webhook is called by Supabase, not by a logged-in person
+  if (request.nextUrl.pathname === "/api/notify-email") return NextResponse.next();
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
