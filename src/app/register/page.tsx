@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
 import { checkBio } from "@/lib/bioCheck";
 import { checkFullName, checkEmail } from "@/lib/validators";
+import { checkPhone } from "@/lib/phoneCheck";
 
 const inputClass =
   "w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none";
@@ -72,7 +73,25 @@ if (!bioCheck.ok) {
   setError(bioCheck.message);
   return;
 }
+const phoneCheck = checkPhone(form.phone);
+if (!phoneCheck.ok) {
+  setError(phoneCheck.message);
+  return;
+}
 setLoading(true);
+const { data: taken, error: phoneErr } = await supabase.rpc("phone_exists", {
+  p_phone: phoneCheck.phone,
+});
+if (phoneErr) {
+  setLoading(false);
+  setError("Could not check the phone number. Please try again.");
+  return;
+}
+if (taken) {
+  setLoading(false);
+  setError("Phone number already exists. If this is your number, please contact support.");
+  return;
+}
     const { data, error } = await supabase.auth.signUp({
        email: form.email.trim().toLowerCase(),
       password: form.password,
@@ -80,7 +99,7 @@ setLoading(true);
         emailRedirectTo: `${window.location.origin}/auth/confirm`,
         data: {
            full_name: form.fullName.trim().replace(/\s+/g, " "),
-          phone: form.phone,
+          phone: phoneCheck.phone,
           date_of_birth: form.dateOfBirth,
           gender: form.gender,
           occupation: form.occupation,

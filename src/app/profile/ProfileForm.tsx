@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { checkBio } from "@/lib/bioCheck";
+import { checkPhone } from "@/lib/phoneCheck";
 import LocationSelect from "@/components/LocationSelect";
 import PhotoPicker from "@/components/PhotoPicker";
 
@@ -91,7 +92,26 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
       return;
     }
 
+    const phoneCheck = checkPhone(form.phone);
+    if (!phoneCheck.ok) {
+      setError(phoneCheck.message);
+      return;
+    }
+
     setLoading(true);
+    const { data: taken, error: phoneErr } = await supabase.rpc("phone_exists", {
+      p_phone: phoneCheck.phone,
+    });
+    if (phoneErr) {
+      setLoading(false);
+      setError("Could not check the phone number. Please try again.");
+      return;
+    }
+    if (taken) {
+      setLoading(false);
+      setError("Phone number already exists. If this is your number, please contact support.");
+      return;
+    }
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -141,7 +161,7 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
 
     const { error: phoneError } = await supabase
       .from("private_details")
-      .update({ phone: form.phone.trim() || null })
+      .update({ phone: phoneCheck.phone })
       .eq("id", user.id);
 
     setLoading(false);
@@ -150,6 +170,7 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
       return;
     }
 
+    setForm((f) => ({ ...f, phone: phoneCheck.phone }));
     setFile(null);
     setSaved(true);
     router.refresh();
