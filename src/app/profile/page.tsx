@@ -17,12 +17,6 @@ const occupationLabels: Record<string, string> = {
 };
 const smokingLabels: Record<string, string> = { non_smoker: "Non-smoker", smoker: "Smoker" };
 const prefLabels: Record<string, string> = { male: "Male roomie", female: "Female roomie", any: "Any gender" };
-const roomiesLabels: Record<number, string> = {
-  1: "Wants to be the only roomie (two of us)",
-  2: "Okay sharing with one other roomie (three of us)",
-  // Old saved value from before the limit of 3 people. Shown as the maximum.
-  3: "Okay sharing with one other roomie (three of us)",
-};
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -34,7 +28,7 @@ export default async function ProfilePage() {
   const { data: p } = await supabase
     .from("profiles")
     .select(
-       "full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, looking_state, looking_area, is_paused, paused_reason, user_type, id_verified, phone_verified, is_admin, photo_status"
+       "full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, looking_state, looking_area, is_paused, paused_reason, user_type, id_verified, phone_verified, is_admin, photo_status"
     )
     .eq("id", user.id)
     .single();
@@ -97,11 +91,6 @@ export default async function ProfilePage() {
         <p className="mt-3 text-sm font-medium text-gray-800">
   🏠 Looking for: {prefLabels[p.roomie_gender_preference ?? "any"]}
 </p>
-{p.user_type === "seeker" && p.max_roomies && (
-  <p className="mt-1 text-sm font-medium text-gray-800">
-    👥 {roomiesLabels[p.max_roomies]}
-  </p>
-)}
 {p.user_type === "seeker" && p.looking_state && (
   <p className="mt-1 text-sm font-medium text-gray-800">
     📍 Looking in: {lookingText(p.looking_state, p.looking_area)}
@@ -131,7 +120,6 @@ export default async function ProfilePage() {
           bio: p.bio ?? "",
            roomiePreference: p.roomie_gender_preference ?? "any",
            userType: p.user_type ?? "",
-maxRoomies: p.max_roomies ? String(p.max_roomies) : "",
 lookingState: p.looking_state ?? "",
 lookingArea: p.looking_area ?? "",
           avatarUrl: p.avatar_url ?? "",

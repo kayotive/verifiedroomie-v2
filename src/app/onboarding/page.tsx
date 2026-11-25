@@ -14,7 +14,6 @@ export default function OnboardingPage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
   const [status, setStatus] = useState<Status | "">("");
-  const [maxRoomies, setMaxRoomies] = useState("");
   const [lookingState, setLookingState] = useState("");
   const [lookingArea, setLookingArea] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,10 +36,6 @@ export default function OnboardingPage() {
     }
     if (!status) {
       setError("Please choose one of the two options.");
-      return;
-    }
-    if (status === "seeker" && !maxRoomies) {
-      setError("Please choose how many roomies you are comfortable sharing with.");
       return;
     }
     if (status === "seeker" && !lookingState) {
@@ -79,7 +74,6 @@ export default function OnboardingPage() {
         user_type: status,
         ...(status === "seeker"
           ? {
-              max_roomies: Number(maxRoomies),
               looking_state: lookingState,
               looking_area: lookingArea || null,
             }
@@ -135,23 +129,6 @@ export default function OnboardingPage() {
 
       {status === "seeker" && (
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold text-gray-900">How many roomies can you share with?</h2>
-            <select
-              value={maxRoomies}
-              onChange={(e) => setMaxRoomies(e.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none"
-            >
-              <option value="">Select...</option>
-              <option value="1">I want to be the only roomie</option>
-              <option value="2">I can share with 1 other roomie (2 of us)</option>
-              <option value="3">I can share with 2 other roomies (3 of us)</option>
-            </select>
-            <p className="text-xs text-gray-500">
-              Owners can see this. You can change it later in your profile.
-            </p>
-          </div>
-
           <LocationSelect
             state={lookingState}
             area={lookingArea}

@@ -19,7 +19,6 @@ type Initial = {
   avatarUrl: string;
   roomiePreference: string;
   userType: string;
-  maxRoomies: string;
   lookingState: string;
   lookingArea: string;
 };
@@ -40,7 +39,6 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
     smoking: initial.smoking,
     bio: initial.bio,
     roomiePreference: initial.roomiePreference || "any",
-    maxRoomies: initial.maxRoomies,
     lookingState: initial.lookingState,
     lookingArea: initial.lookingArea,
   });
@@ -75,10 +73,6 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
 
     if (!form.bio.trim()) {
       setError("Please write something about yourself. This can't be left empty.");
-      return;
-    }
-    if (initial.userType === "seeker" && !form.maxRoomies) {
-      setError("Please choose how many roomies you're comfortable sharing with.");
       return;
     }
     if (initial.userType === "seeker" && !form.lookingState) {
@@ -144,7 +138,6 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
         bio: form.bio.trim() || null,
         ...(initial.userType === "seeker"
           ? {
-              max_roomies: Number(form.maxRoomies),
               looking_state: form.lookingState,
               looking_area: form.lookingArea || null,
             }
@@ -261,21 +254,6 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
 
       {initial.userType === "seeker" && (
         <>
-          <div>
-            <label className={labelClass}>How many roomies can you share with?</label>
-            <select
-              name="maxRoomies"
-              required
-              value={form.maxRoomies}
-              onChange={update}
-              className={inputClass}
-            >
-              <option value="">Select...</option>
-              <option value="1">I want to be the only roomie (two of us)</option>
-              <option value="2">I can share with one other roomie (three of us)</option>
-            </select>
-          </div>
-
           <LocationSelect
             state={form.lookingState}
             area={form.lookingArea}

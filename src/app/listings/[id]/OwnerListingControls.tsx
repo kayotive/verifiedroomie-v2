@@ -24,13 +24,11 @@ function agoLabel(days: number) {
 export default function OwnerListingControls({
   listingId,
   roomAvailable,
-  roomiesWanted,
   hiddenReason,
   lastConfirmedAt,
 }: {
   listingId: string;
   roomAvailable: boolean;
-  roomiesWanted: number;
   hiddenReason: string | null;
   lastConfirmedAt: string;
 }) {
@@ -40,8 +38,6 @@ export default function OwnerListingControls({
   const [confirming, setConfirming] = useState(false); // delete confirmation
   const [choosingReason, setChoosingReason] = useState(false);
   const [error, setError] = useState("");
-  const [roomies, setRoomies] = useState(String(roomiesWanted));
-  const [roomiesSaved, setRoomiesSaved] = useState(false);
 
   const days = daysSince(lastConfirmedAt);
   const stale = roomAvailable && days >= STALE_DAYS;
@@ -76,21 +72,6 @@ export default function OwnerListingControls({
 
   function stillAvailable() {
     return updateListing({ last_confirmed_at: new Date().toISOString() });
-  }
-
-  async function saveRoomies(value: string) {
-    const previous = roomies;
-    setRoomies(value);
-    setRoomiesSaved(false);
-    const ok = await updateListing({
-      roomies_wanted: Number(value),
-      last_confirmed_at: new Date().toISOString(),
-    });
-    if (!ok) {
-      setRoomies(previous);
-      return;
-    }
-    setRoomiesSaved(true);
   }
 
   async function remove() {
@@ -159,26 +140,6 @@ export default function OwnerListingControls({
           </button>
         </>
       )}
-
-      <div className="rounded-xl border border-gray-200 bg-white p-3">
-        <label className="mb-1 block text-sm font-medium text-gray-700">
-          Roomies you&apos;re still accepting
-        </label>
-        <select
-          value={roomies}
-          onChange={(e) => saveRoomies(e.target.value)}
-          disabled={loading}
-          className="w-full rounded-xl border border-gray-300 px-3 py-2 text-gray-900 focus:border-emerald-600 focus:outline-none disabled:opacity-60"
-        >
-          <option value="1">Accepting 1 roomie (2 occupants)</option>
-          <option value="2">Accepting 2 roomies (3 occupants)</option>
-        </select>
-        <p className="mt-1 text-xs text-gray-500">
-          {roomiesSaved
-            ? "Saved ✅ Seekers now see the new number."
-            : "Saves as soon as you change it. The area can't be changed."}
-        </p>
-      </div>
 
       {roomAvailable &&
         (!choosingReason ? (

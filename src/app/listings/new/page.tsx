@@ -62,7 +62,6 @@ export default function NewListingPage() {
   const [form, setForm] = useState({
     apartmentType: "",
     roomAvailable: "yes",
-    roomiesWanted: "1",
     contributionAmount: "",
     moveInDate: "",
     stateKey: "",
@@ -186,7 +185,6 @@ export default function NewListingPage() {
         owner_id: user.id,
         apartment_type: form.apartmentType,
         room_available: form.roomAvailable === "yes",
-        roomies_wanted: Number(form.roomiesWanted),
         contribution_amount: Number(form.contributionAmount),
         move_in_date: form.moveInDate,
         description: form.description,
@@ -280,15 +278,6 @@ export default function NewListingPage() {
             <option value="yes">Yes</option>
             <option value="no">No</option>
           </select>
-        </div>
-
-        <div>
-          <label className={labelClass}>How many roomies are you accepting?</label>
-          <select name="roomiesWanted" required value={form.roomiesWanted} onChange={update} className={inputClass}>
-            <option value="1">Accepting 1 roomie (2 occupants)</option>
-            <option value="2">Accepting 2 roomies (3 occupants)</option>
-          </select>
-          <p className="mt-1 text-xs text-gray-500">You can change this later if your needs change.</p>
         </div>
 
         <div>

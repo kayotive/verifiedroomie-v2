@@ -25,7 +25,6 @@ type SavedItem = {
   apartment_type: string | null;
   area: string | null;
   contribution_amount: number | string | null;
-  roomies_wanted: number | null;
   cover_path: string | null;
   connection: string | null;
   i_sent: boolean | null;
@@ -250,11 +249,6 @@ export default async function SavedPage({
                         <p className="mt-1 truncate text-slate-700">
                           {type} · {i.area}
                         </p>
-                        {i.roomies_wanted && (
-                          <p className="mt-2 w-fit rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">
-                            👥 Accepting {i.roomies_wanted} {i.roomies_wanted === 1 ? "roomie" : "roomies"}
-                          </p>
-                        )}
                         <Tag text={tag} />
                       </div>
                     </Link>
