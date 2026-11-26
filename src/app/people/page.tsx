@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import LocationFilter from "@/components/LocationFilter";
 import { Avatar, EmptyState, Pill, SortTabs, activity, isNew, timeAgo } from "@/components/ui";
 import { ShieldCheckIcon, UsersIcon } from "@/components/icons";
+import PhotoVerifiedBadge from "@/components/PhotoVerifiedBadge";
 import { LOCATIONS, lookingText } from "@/lib/locations";
 
 const PAGE_SIZE = 12;
@@ -40,6 +41,7 @@ type Person = {
   phone_verified: boolean;
   created_at: string;
   last_active_at: string | null;
+  photo_status: string | null;
 };
 
 export default async function PeoplePage({
@@ -99,7 +101,7 @@ export default async function PeoplePage({
   let query = supabase
     .from("profiles")
     .select(
-      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, looking_state, looking_area, id_verified, phone_verified, created_at, last_active_at",
+      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, looking_state, looking_area, id_verified, phone_verified, created_at, last_active_at, photo_status",
       { count: "exact" }
     )
     .eq("user_type", "seeker")
@@ -288,6 +290,7 @@ export default async function PeoplePage({
                         </p>
 
                         <div className="mt-4 flex flex-wrap gap-1.5">
+                          <PhotoVerifiedBadge show={p.photo_status === "approved"} />
                           {p.id_verified && (
                             <Pill tone="brand">
                               <ShieldCheckIcon className="h-3.5 w-3.5" /> ID verified

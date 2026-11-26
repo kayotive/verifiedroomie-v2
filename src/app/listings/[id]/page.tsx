@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AvatarZoom from "@/components/AvatarZoom";
+import PhotoVerifiedBadge from "@/components/PhotoVerifiedBadge";
 import { whatsappLink } from "@/lib/phone";
 import ConnectButton from "./ConnectButton";
  import HiddenProfileConnect from "./HiddenProfileConnect";
@@ -68,6 +69,7 @@ last_confirmed_at: string;
     roomie_gender_preference: string | null;
     id_verified: boolean;
     phone_verified: boolean;
+    photo_status: string;
   };
   listing_media: Media[];
 };
@@ -93,7 +95,7 @@ export default async function ListingDetailsPage({
     .select(
       `id, owner_id, room_available, apartment_type, contribution_amount, hidden_reason, last_confirmed_at, move_in_date, description,
        house_rules, place_name, area, latitude, longitude, apartment_verified,
-       profiles!inner(full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, id_verified, phone_verified),
+       profiles!inner(full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, id_verified, phone_verified, photo_status),
        listing_media(path, category, kind)`
     )
     .eq("id", id)
@@ -232,9 +234,12 @@ export default async function ListingDetailsPage({
       )}
 
       <section className="mt-5 flex items-center gap-3 rounded-2xl border border-gray-200 p-3">
-        {p.avatar_url && (
-          <AvatarZoom src={p.avatar_url} name={p.full_name} size={64} />
-        )}
+        <div className="flex flex-col items-center gap-1.5">
+          {p.avatar_url && (
+            <AvatarZoom src={p.avatar_url} name={p.full_name} size={64} />
+          )}
+          <PhotoVerifiedBadge show={p.photo_status === "approved"} />
+        </div>
         <div>
           <p className="font-semibold text-gray-900">
             {firstName}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AvatarZoom from "@/components/AvatarZoom";
+import PhotoVerifiedBadge from "@/components/PhotoVerifiedBadge";
 import LogoutButton from "../dashboard/LogoutButton";
 import ProfileForm from "./ProfileForm";
 import DeleteAccount from "./DeleteAccount";
@@ -69,9 +70,12 @@ export default async function ProfilePage() {
           This is how others see you
         </p>
         <div className="flex items-center gap-3">
-          {p.avatar_url && (
-            <AvatarZoom src={p.avatar_url} name={p.full_name} size={80} />
-          )}
+          <div className="flex flex-col items-center gap-1.5">
+            {p.avatar_url && (
+              <AvatarZoom src={p.avatar_url} name={p.full_name} size={80} />
+            )}
+            <PhotoVerifiedBadge show={p.photo_status === "approved"} />
+          </div>
           <div>
             <p className="text-lg font-bold text-gray-900">
               {firstName}

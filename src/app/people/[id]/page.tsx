@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AvatarZoom from "@/components/AvatarZoom";
+import PhotoVerifiedBadge from "@/components/PhotoVerifiedBadge";
 import { whatsappLink } from "@/lib/phone";
 import ConnectButton from "../../listings/[id]/ConnectButton";
 import ReportBlock from "@/components/ReportBlock";
@@ -40,7 +41,7 @@ export default async function PersonPage({
   const { data: person } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, looking_state, looking_area, id_verified, phone_verified, user_type, is_suspended, is_paused"
+      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, looking_state, looking_area, id_verified, phone_verified, user_type, is_suspended, is_paused, photo_status"
     )
     .eq("id", id)
     .maybeSingle();
@@ -96,6 +97,9 @@ export default async function PersonPage({
         {person.avatar_url && (
           <AvatarZoom src={person.avatar_url} name={person.full_name} size={128} />
         )}
+        <div className="mt-2">
+          <PhotoVerifiedBadge show={person.photo_status === "approved"} />
+        </div>
         <h1 className="mt-3 text-2xl font-bold text-gray-900">
           {firstName}
           {age ? `, ${age}` : ""}
