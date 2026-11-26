@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import HeaderClient from "./HeaderClient";
+import FeedbackButton from "./FeedbackButton";
 
 export default async function SiteHeader() {
   const supabase = await createClient();
@@ -28,17 +29,21 @@ export default async function SiteHeader() {
     .is("read_at", null);
 
   return (
-    <HeaderClient
-      viewer={{
-        name: p?.full_name ?? "",
-        avatarUrl: p?.avatar_url ?? null,
-        role: p?.user_type ?? null,
-        isAdmin: !!p?.is_admin,
-        idVerified: !!p?.id_verified,
-        isSuspended: !!p?.is_suspended,
-        pendingRequests: count ?? 0,
-        unreadNotifications: unread ?? 0,
-      }}
-    />
+    <>
+      <HeaderClient
+        viewer={{
+          name: p?.full_name ?? "",
+          avatarUrl: p?.avatar_url ?? null,
+          role: p?.user_type ?? null,
+          isAdmin: !!p?.is_admin,
+          idVerified: !!p?.id_verified,
+          isSuspended: !!p?.is_suspended,
+          pendingRequests: count ?? 0,
+          unreadNotifications: unread ?? 0,
+        }}
+      />
+      {/* Feedback button: only for members who finished setup and are not suspended */}
+      {p?.user_type && !p?.is_suspended && <FeedbackButton />}
+    </>
   );
 }

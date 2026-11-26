@@ -273,8 +273,14 @@ export default async function FaqPage() {
           <Link href="/safety" className="font-semibold text-brand-700">
             Safety tips
           </Link>
-          , or reach us directly:
+          , or send us a message:
         </p>
+        <Link
+          href="/contact"
+          className="mb-5 inline-flex rounded-xl bg-brand-600 px-5 py-3 font-semibold text-white transition hover:bg-brand-700"
+        >
+          Contact us
+        </Link>
         <ContactLinks />
       </div>
     </main>
