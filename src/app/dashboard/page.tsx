@@ -13,6 +13,26 @@ import {
   UsersIcon,
 } from "@/components/icons";
 
+// Camera icon for the "Admin: photos" tile
+function CameraIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </svg>
+  );
+}
+
 const typeLabels: Record<string, string> = {
   self_contained: "Self-contained",
   "1_bedroom": "1 Bedroom",
@@ -197,6 +217,12 @@ export default async function DashboardPage() {
               icon={FlagIcon}
               title="Admin: reports"
               body="Handle reports and suspensions."
+            />
+            <Tile
+              href="/admin/photos"
+              icon={CameraIcon}
+              title="Admin: photos"
+              body="Review profile photos and flag the ones that break the rules."
             />
           </>
         )}
