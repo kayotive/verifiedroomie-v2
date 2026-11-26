@@ -178,6 +178,13 @@ export default async function ListingDetailsPage({
         <Link href="/admin/verifications" className="text-sm font-semibold text-emerald-700">
           ← Back to verifications
         </Link>
+      ) : from === "duplicates" ? (
+        <Link
+          href="/admin/duplicates"
+          className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 px-4 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          ✕ Close
+        </Link>
       ) : (
         <Link href={isMine ? "/dashboard" : "/feed"} className="text-sm font-semibold text-emerald-700">
           ← Back
