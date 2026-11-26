@@ -88,11 +88,13 @@ export default async function PeoplePage({
     .maybeSingle();
   const myLoc = LOCATIONS.find((l) => l.state === myListing?.state);
   const myAreaName = myListing?.area ? String(myListing.area).split(",")[0].trim() : "";
+  const myArea = myLoc && myLoc.areas.includes(myAreaName) ? myAreaName : null;
   const nearHref = myLoc
     ? `/people?state=${encodeURIComponent(myLoc.state)}${
-        myLoc.areas.includes(myAreaName) ? `&area=${encodeURIComponent(myAreaName)}` : ""
+        myArea ? `&area=${encodeURIComponent(myArea)}` : ""
       }`
     : null;
+  const nearLabel = myLoc ? lookingText(myLoc.state, myArea) : "";
 
   let query = supabase
     .from("profiles")
@@ -185,7 +187,7 @@ export default async function PeoplePage({
                 href={nearHref}
                 className="font-semibold text-brand-700 hover:text-brand-800"
               >
-                📍 Show people looking near your listing
+                📍 Show seekers looking for rooms in {nearLabel}
               </Link>
             </p>
           )}
@@ -201,8 +203,8 @@ export default async function PeoplePage({
           <>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-medium text-slate-600">
-                {total} {total === 1 ? "person" : "people"}{" "}
-                {filtered ? "match your search" : "looking right now"}
+                {total} {total === 1 ? "seeker" : "seekers"}{" "}
+                {filtered ? "match your search" : "looking at listings right now"}
               </p>
               <SortTabs
                 options={sortOptions}
