@@ -1,4 +1,6 @@
 // Contact links with icons. Used in the footer of the home page.
+import Link from "next/link";
+
 const EMAIL = "askverifiedroomie@gmail.com";
 const WHATSAPP_NUMBER = "2349077383439"; // +234 907 738 3439
 const HANDLE = "officialverifiedroomie";
@@ -28,7 +30,7 @@ function Icon({ children }: IconProps) {
 const linkClass =
   "inline-flex items-center gap-2 text-sm text-slate-600 transition hover:text-brand-600";
 
-export default function ContactLinks() {
+export default function ContactLinks({ showFormLink = true }: { showFormLink?: boolean }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm font-semibold text-slate-900">Need help? Contact us</p>
@@ -85,6 +87,17 @@ export default function ContactLinks() {
           </a>
         </li>
       </ul>
+      {showFormLink && (
+        <Link
+          href="/contact"
+          className="mt-1 inline-flex w-fit items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700"
+        >
+          <Icon>
+            <path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1H9l-5 4V6a1 1 0 0 1 1 -1z" />
+          </Icon>
+          Send us a message
+        </Link>
+      )}
     </div>
   );
 }

@@ -281,7 +281,7 @@ export default async function FaqPage() {
         >
           Contact us
         </Link>
-        <ContactLinks />
+        <ContactLinks showFormLink={false} />
       </div>
     </main>
   );

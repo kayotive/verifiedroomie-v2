@@ -44,7 +44,7 @@ export default async function ContactPage() {
 
       <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-5">
         <p className="mb-3 text-sm text-slate-600">Prefer to reach us directly?</p>
-        <ContactLinks />
+        <ContactLinks showFormLink={false} />
       </div>
     </main>
   );
