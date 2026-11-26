@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
@@ -16,6 +17,7 @@ const buttonClass =
 type Stage = "checking" | "expired" | "form" | "done";
 
 export default function ResetPasswordPage() {
+  const router = useRouter();
   const supabase = createClient();
   const [stage, setStage] = useState<Stage>("checking");
   const [password, setPassword] = useState("");
@@ -59,6 +61,7 @@ export default function ResetPasswordPage() {
 
     // Sign out everywhere, so the person logs in fresh with the new password
     await supabase.auth.signOut({ scope: "global" });
+    router.refresh();
     setLoading(false);
     setStage("done");
   }
@@ -122,9 +125,10 @@ export default function ResetPasswordPage() {
           <div className="flex flex-col gap-4 text-center">
             <h1 className="text-3xl font-bold text-slate-900">Password changed ✅</h1>
             <p className="text-slate-600">Your password has been updated. Please log in with your new password.</p>
-            <Link href="/login" className={buttonClass}>
+            {/* A plain link (full page load) so the header never shows the old signed-in person */}
+            <a href="/login" className={buttonClass}>
               Back to login
-            </Link>
+            </a>
           </div>
         )}
       </main>
