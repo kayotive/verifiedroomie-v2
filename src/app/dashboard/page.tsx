@@ -152,7 +152,14 @@ export default async function DashboardPage() {
             />
             <div>
               <p className="text-sm text-brand-100">Welcome back</p>
-              <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{firstName}</h1>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{firstName}</h1>
+                {profile.is_admin && (
+                  <span className="rounded-full bg-amber-400 px-2.5 py-0.5 text-xs font-extrabold uppercase tracking-wide text-amber-950">
+                    Admin
+                  </span>
+                )}
+              </div>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold">
                 <span className="rounded-full bg-white/15 px-3 py-1">
                   {profile.connect_points} Connect Points
