@@ -73,8 +73,9 @@ export default function HeaderClient({ viewer }: { viewer: Viewer | null }) {
       { href: "/#verification", label: "Verification" },
       { href: "/#pricing", label: "Pricing" },
       { href: "/safety", label: "Safety tips" },
+      { href: "/faq", label: "FAQ" },
     ];
- } else if (!limited && viewer.role === "owner") {
+  } else if (!limited && viewer.role === "owner") {
     links = [
       { href: "/dashboard", label: "Dashboard" },
       { href: "/people", label: "People" },
@@ -251,6 +252,9 @@ export default function HeaderClient({ viewer }: { viewer: Viewer | null }) {
                     </Link>
                     <Link href="/reset-password" onClick={close} className={itemClass}>
                       Change password
+                    </Link>
+                    <Link href="/faq" onClick={close} className={itemClass}>
+                      Help &amp; FAQ
                     </Link>
                     {viewer.isAdmin && (
                       <>
