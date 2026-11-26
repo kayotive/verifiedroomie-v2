@@ -1,21 +1,40 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import PasswordInput from "@/components/PasswordInput";
+import Logo from "@/components/Logo";
+import ContactLinks from "@/components/ContactLinks";
 
 const inputClass =
-  "w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none";
+  "w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 focus:border-brand-600 focus:outline-none";
+
+const buttonClass =
+  "rounded-xl bg-brand-600 px-6 py-3 text-center font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60";
+
+type Stage = "checking" | "expired" | "form" | "done";
 
 export default function ResetPasswordPage() {
-  const router = useRouter();
   const supabase = createClient();
+  const [stage, setStage] = useState<Stage>("checking");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
+
+  // The reset link signs the person in for a moment. If there is no session, the link is
+  // missing, used up, or expired.
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!cancelled) setStage(data.user ? "form" : "expired");
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,59 +51,89 @@ export default function ResetPasswordPage() {
 
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       setError(error.message);
       return;
     }
-    setDone(true);
-    setTimeout(() => {
-      router.push("/dashboard");
-      router.refresh();
-    }, 1500);
-  }
 
-  if (done) {
-    return (
-      <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-col items-center justify-center gap-3 px-6 text-center">
-        <h1 className="text-3xl font-bold text-gray-900">Password updated ✅</h1>
-        <p className="text-gray-600">Taking you back to the app...</p>
-      </main>
-    );
+    // Sign out everywhere, so the person logs in fresh with the new password
+    await supabase.auth.signOut({ scope: "global" });
+    setLoading(false);
+    setStage("done");
   }
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-col justify-center px-6 py-10">
-      <h1 className="text-3xl font-bold text-gray-900">Set a new password</h1>
-      <p className="mb-6 mt-1 text-gray-600">Choose a password you haven&apos;t used before.</p>
+    <div className="flex min-h-screen flex-col bg-white">
+      <div className="flex justify-center px-6 pt-8">
+        <Logo href="/login" />
+      </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <PasswordInput
-          required
-          minLength={8}
-          placeholder="New password (at least 8 characters)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className={inputClass}
-        />
-        <PasswordInput
-          required
-          placeholder="Confirm new password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          className={inputClass}
-        />
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 py-10">
+        {stage === "checking" && <p className="text-center text-slate-500">Please wait...</p>}
 
-        {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+        {stage === "expired" && (
+          <div className="flex flex-col gap-4 text-center">
+            <h1 className="text-3xl font-bold text-slate-900">Link expired</h1>
+            <p className="text-slate-600">
+              This reset link has expired or has already been used. Please request a new one.
+            </p>
+            <Link href="/forgot-password" className={buttonClass}>
+              Request a new link
+            </Link>
+            <Link href="/login" className="text-sm font-semibold text-brand-700 hover:text-brand-800">
+              Back to login
+            </Link>
+          </div>
+        )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-        >
-          {loading ? "Saving..." : "Update password"}
-        </button>
-      </form>
-    </main>
+        {stage === "form" && (
+          <>
+            <h1 className="text-3xl font-bold text-slate-900">Set a new password</h1>
+            <p className="mb-6 mt-1 text-slate-600">Choose a password you haven&apos;t used before.</p>
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <PasswordInput
+                required
+                minLength={8}
+                placeholder="New password (at least 8 characters)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={inputClass}
+              />
+              <PasswordInput
+                required
+                placeholder="Confirm new password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                className={inputClass}
+              />
+
+              {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+
+              <button type="submit" disabled={loading} className={buttonClass}>
+                {loading ? "Saving..." : "Update password"}
+              </button>
+            </form>
+          </>
+        )}
+
+        {stage === "done" && (
+          <div className="flex flex-col gap-4 text-center">
+            <h1 className="text-3xl font-bold text-slate-900">Password changed ✅</h1>
+            <p className="text-slate-600">Your password has been updated. Please log in with your new password.</p>
+            <Link href="/login" className={buttonClass}>
+              Back to login
+            </Link>
+          </div>
+        )}
+      </main>
+
+      <footer className="border-t border-slate-100 px-6 py-8">
+        <div className="mx-auto flex max-w-md justify-center sm:justify-start">
+          <ContactLinks />
+        </div>
+      </footer>
+    </div>
   );
 }

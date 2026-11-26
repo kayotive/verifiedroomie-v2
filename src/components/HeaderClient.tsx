@@ -111,6 +111,9 @@ export default function HeaderClient({ viewer }: { viewer: Viewer | null }) {
 
   const initial = (viewer?.name || "?").trim().charAt(0).toUpperCase();
 
+  // The password reset page is a clean standalone screen: no menus, no avatar
+  if (pathname === "/reset-password") return null;
+
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
