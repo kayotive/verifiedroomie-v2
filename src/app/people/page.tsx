@@ -17,11 +17,6 @@ const occupationLabels: Record<string, string> = {
 };
 const smokingLabels: Record<string, string> = { non_smoker: "Non-smoker", smoker: "Smoker" };
 const prefLabels: Record<string, string> = { male: "Male roomie", female: "Female roomie", any: "Any gender" };
-const roomiesLabels: Record<number, string> = {
-  1: "Wants to be the only roomie",
-  2: "Okay with up to 2 roomies",
-  3: "Okay with up to 3 roomies",
-};
 const sortOptions = [
   { value: "recent", label: "Newest members" },
   { value: "active", label: "Recently active" },
@@ -39,7 +34,6 @@ type Person = {
   avatar_url: string | null;
   bio: string | null;
   roomie_gender_preference: string | null;
-  max_roomies: number | null;
   looking_state: string | null;
   looking_area: string | null;
   id_verified: boolean;
@@ -103,7 +97,7 @@ export default async function PeoplePage({
   let query = supabase
     .from("profiles")
     .select(
-      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, max_roomies, looking_state, looking_area, id_verified, phone_verified, created_at, last_active_at",
+      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, looking_state, looking_area, id_verified, phone_verified, created_at, last_active_at",
       { count: "exact" }
     )
     .eq("user_type", "seeker")
@@ -287,11 +281,6 @@ export default async function PeoplePage({
                         <p className="mt-1 text-xs font-semibold text-brand-700">
                           Looking for: {prefLabels[p.roomie_gender_preference ?? "any"]}
                         </p>
-                        {p.max_roomies && (
-                          <p className="mt-1 text-xs font-semibold text-brand-700">
-                            👥 {roomiesLabels[p.max_roomies]}
-                          </p>
-                        )}
                         <p className="mt-4 line-clamp-3 flex-1 text-sm leading-relaxed text-slate-600">
                           {p.bio || "This member hasn't written a bio yet."}
                         </p>
