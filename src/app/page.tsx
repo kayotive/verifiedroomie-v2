@@ -182,7 +182,7 @@ export default async function HomePage() {
 
           <div className="vr-rise vr-rise-2 relative">
             <Image
-              src="/images/hero-housemates.jpg"
+              src="/images/hero-friends.jpg"
               alt="Three young adults relaxing together in a bright shared living room"
               width={1408}
               height={768}
