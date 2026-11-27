@@ -94,23 +94,23 @@ export default function SearchFilters({
             {mode === "feed" ? (
               <>
                 <optgroup label="Rooms accepting">
-                  <option value="pref_male">Male roomies</option>
-                  <option value="pref_female">Female roomies</option>
+                  <option value="pref_male">Accepting male roomies</option>
+                  <option value="pref_female">Accepting female roomies</option>
                 </optgroup>
                 <optgroup label="Host is">
-                  <option value="is_male">Male</option>
-                  <option value="is_female">Female</option>
+                  <option value="is_male">Host is male</option>
+                  <option value="is_female">Host is female</option>
                 </optgroup>
               </>
             ) : (
               <>
                 <optgroup label="Seeker is">
-                  <option value="is_male">Male</option>
-                  <option value="is_female">Female</option>
+                  <option value="is_male">Seeker is male</option>
+                  <option value="is_female">Seeker is female</option>
                 </optgroup>
                 <optgroup label="Seeker wants a housemate who is">
-                  <option value="pref_male">Male (or any)</option>
-                  <option value="pref_female">Female (or any)</option>
+                  <option value="pref_male">Wants a male housemate</option>
+                  <option value="pref_female">Wants a female housemate</option>
                 </optgroup>
               </>
             )}
