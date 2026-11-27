@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import LocationSelect from "@/components/LocationSelect";
 import PhotoPicker from "@/components/PhotoPicker";
 import TypePicker from "@/components/TypePicker";
+import { compressImage } from "@/lib/compressImage";
 
 type Status = "owner" | "seeker";
 
@@ -56,10 +57,11 @@ export default function OnboardingPage() {
       return;
     }
 
+    const small = await compressImage(file, 800, 0.85);
     const path = `${user.id}/avatar`;
     const { error: uploadError } = await supabase.storage
       .from("avatars")
-      .upload(path, file, { upsert: true, contentType: file.type });
+      .upload(path, small, { upsert: true, contentType: small.type });
 
     if (uploadError) {
       setLoading(false);

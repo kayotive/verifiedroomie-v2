@@ -5,6 +5,7 @@ import Link from "next/link";
 import { hashImage } from "@/lib/imageHash";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { compressImage, videoSeconds } from "@/lib/compressImage";
 import { checkListingField, checkListingCombined } from "@/lib/bioCheck";
 import { LOCATIONS, OTHER_AREA, areaText, stateLabel } from "@/lib/locations";
 
@@ -25,7 +26,8 @@ const OPTIONAL_PHOTOS = [
 ];
 
 const MAX_PHOTO = 10 * 1024 * 1024; // 10 MB
-const MAX_VIDEO = 50 * 1024 * 1024; // 50 MB
+const MAX_VIDEO = 30 * 1024 * 1024; // 30 MB
+const MAX_VIDEO_SECONDS = 60;
 
 function FileField({
   label,
@@ -100,18 +102,27 @@ export default function NewListingPage() {
   }
 
   function pickFile(key: string, kind: "photo" | "video") {
-    return (e: React.ChangeEvent<HTMLInputElement>) => {
-      const f = e.target.files?.[0];
+    return async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const input = e.target;
+      const f = input.files?.[0];
       if (!f) return;
       const limit = kind === "photo" ? MAX_PHOTO : MAX_VIDEO;
       if (f.size > limit) {
         setError(
           kind === "photo"
             ? "That photo is too large. Photos must be under 10 MB."
-            : "That video is too large. Please keep it under 50 MB (try recording at 720p)."
+            : "That video is too large. Please keep it under 30 MB (try recording at 720p)."
         );
-        e.target.value = "";
+        input.value = "";
         return;
+      }
+      if (kind === "video") {
+        const secs = await videoSeconds(f);
+        if (secs > MAX_VIDEO_SECONDS) {
+          setError("That video is too long. Please keep it under 1 minute (20 to 45 seconds is ideal).");
+          input.value = "";
+          return;
+        }
       }
       setError("");
       setFiles((prev) => ({ ...prev, [key]: f }));
@@ -209,12 +220,14 @@ export default function NewListingPage() {
     try {
       for (const [key, file] of Object.entries(files)) {
         const kind = key === "video" ? "video" : "photo";
-        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        // Photos are shrunk before upload; the duplicate check below uses the original
+        const toUpload = kind === "photo" ? await compressImage(file) : file;
+        const ext = toUpload.name.split(".").pop()?.toLowerCase() || "jpg";
         const path = `${user.id}/${listing.id}/${key}-${Date.now()}.${ext}`;
 
         const { error: uploadError } = await supabase.storage
           .from("listing-media")
-          .upload(path, file, { contentType: file.type });
+          .upload(path, toUpload, { contentType: toUpload.type });
         if (uploadError) throw uploadError;
 
         const hashes = kind === "photo" ? await hashImage(file) : null;
@@ -373,7 +386,7 @@ export default function NewListingPage() {
         {OPTIONAL_PHOTOS.map((p) => (
           <FileField key={p.key} label={`${p.label} photo`} accept="image/jpeg,image/png,image/webp" file={files[p.key]} onPick={pickFile(p.key, "photo")} />
         ))}
-        <FileField label="Apartment walkthrough video (20 to 45 seconds, under 50 MB)" accept="video/mp4,video/quicktime,video/webm" file={files.video} onPick={pickFile("video", "video")} />
+        <FileField label="Apartment walkthrough video (20 to 45 seconds, under 30 MB)" accept="video/mp4,video/quicktime,video/webm" file={files.video} onPick={pickFile("video", "video")} />
 
         {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
