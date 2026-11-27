@@ -6,7 +6,7 @@ import { Avatar, EmptyState, Pill, SortTabs, activity, isNew, timeAgo } from "@/
 import { ShieldCheckIcon, UsersIcon } from "@/components/icons";
 import PhotoVerifiedBadge from "@/components/PhotoVerifiedBadge";
 import { LOCATIONS, lookingText } from "@/lib/locations";
-import { TYPE_OPTIONS } from "@/components/TypePicker";
+import { TYPE_OPTIONS } from "@/lib/apartmentTypes";
 
 const PAGE_SIZE = 12;
 

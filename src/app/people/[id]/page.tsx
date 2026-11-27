@@ -7,7 +7,7 @@ import { whatsappLink } from "@/lib/phone";
 import ConnectButton from "../../listings/[id]/ConnectButton";
 import ReportBlock from "@/components/ReportBlock";
 import { lookingText } from "@/lib/locations";
-import { TYPE_OPTIONS } from "@/components/TypePicker";
+import { TYPE_OPTIONS } from "@/lib/apartmentTypes";
 
 const genderLabels: Record<string, string> = { male: "Male", female: "Female", other: "Other" };
 const occupationLabels: Record<string, string> = {

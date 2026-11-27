@@ -8,7 +8,7 @@ import ProfileForm from "./ProfileForm";
 import DeleteAccount from "./DeleteAccount";
 import PauseProfile from "./PauseProfile";
 import { lookingText } from "@/lib/locations";
-import { TYPE_OPTIONS } from "@/components/TypePicker";
+import { TYPE_OPTIONS } from "@/lib/apartmentTypes";
 
 const genderLabels: Record<string, string> = { male: "Male", female: "Female", other: "Other" };
 const occupationLabels: Record<string, string> = {
