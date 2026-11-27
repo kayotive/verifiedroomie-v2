@@ -7,6 +7,7 @@ import { whatsappLink } from "@/lib/phone";
 import ConnectButton from "../../listings/[id]/ConnectButton";
 import ReportBlock from "@/components/ReportBlock";
 import { lookingText } from "@/lib/locations";
+import { TYPE_OPTIONS } from "@/components/TypePicker";
 
 const genderLabels: Record<string, string> = { male: "Male", female: "Female", other: "Other" };
 const occupationLabels: Record<string, string> = {
@@ -41,7 +42,7 @@ export default async function PersonPage({
   const { data: person } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, looking_state, looking_area, id_verified, phone_verified, user_type, is_suspended, is_paused, photo_status"
+      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, looking_state, looking_area, looking_types, id_verified, phone_verified, user_type, is_suspended, is_paused, photo_status"
     )
     .eq("id", id)
     .maybeSingle();
@@ -120,6 +121,14 @@ export default async function PersonPage({
     📍 Looking in: {lookingText(person.looking_state, person.looking_area)}
   </p>
 )}
+<p className="mt-1 text-sm font-medium text-gray-800">
+  🏢 Apartment type:{" "}
+  {(person.looking_types ?? []).length
+    ? TYPE_OPTIONS.filter((o) => (person.looking_types ?? []).includes(o.value))
+        .map((o) => o.label)
+        .join(", ")
+    : "Any"}
+</p>
 <div className="mt-2 flex flex-wrap justify-center gap-1">
           {badges.map((b) => (
             <span key={b} className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">

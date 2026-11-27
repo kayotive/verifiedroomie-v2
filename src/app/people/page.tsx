@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import LocationFilter from "@/components/LocationFilter";
+import SearchFilters from "@/components/SearchFilters";
 import { Avatar, EmptyState, Pill, SortTabs, activity, isNew, timeAgo } from "@/components/ui";
 import { ShieldCheckIcon, UsersIcon } from "@/components/icons";
 import PhotoVerifiedBadge from "@/components/PhotoVerifiedBadge";
 import { LOCATIONS, lookingText } from "@/lib/locations";
+import { TYPE_OPTIONS } from "@/components/TypePicker";
 
 const PAGE_SIZE = 12;
 
@@ -37,6 +38,7 @@ type Person = {
   roomie_gender_preference: string | null;
   looking_state: string | null;
   looking_area: string | null;
+  looking_types: string[] | null;
   id_verified: boolean;
   phone_verified: boolean;
   created_at: string;
@@ -76,6 +78,11 @@ export default async function PeoplePage({
   const state = loc ? loc.state : "";
   const area = loc && loc.areas.includes(sp.area ?? "") ? (sp.area as string) : "";
   const sort = sortOptions.some((o) => o.value === sp.sort) ? (sp.sort as string) : "recent";
+  const gm = /^(is|pref)_(male|female)$/.exec(sp.gender ?? "");
+  const gender = gm ? (sp.gender as string) : "";
+  const gMode = gm ? gm[1] : "";
+  const gValue = gm ? gm[2] : "";
+  const type = TYPE_OPTIONS.some((o) => o.value === sp.type) ? (sp.type as string) : "";
   const page = Math.max(1, parseInt(sp.page ?? "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
   const year = new Date().getFullYear();
@@ -94,14 +101,14 @@ export default async function PeoplePage({
   const nearHref = myLoc
     ? `/people?state=${encodeURIComponent(myLoc.state)}${
         myArea ? `&area=${encodeURIComponent(myArea)}` : ""
-      }`
+      }${gender ? `&gender=${gender}` : ""}${type ? `&type=${type}` : ""}`
     : null;
   const nearLabel = myLoc ? lookingText(myLoc.state, myArea) : "";
 
   let query = supabase
     .from("profiles")
     .select(
-      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, looking_state, looking_area, id_verified, phone_verified, created_at, last_active_at, photo_status",
+      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, looking_state, looking_area, looking_types, id_verified, phone_verified, created_at, last_active_at, photo_status",
       { count: "exact" }
     )
     .eq("user_type", "seeker")
@@ -111,8 +118,22 @@ export default async function PeoplePage({
 
   // Seekers looking in this state, and in this area (or anywhere in the state)
   if (loc) query = query.eq("looking_state", loc.state);
-  if (loc && area) {
-    query = query.or(`looking_area.eq."${area}",looking_area.is.null`);
+  // Area and apartment type both allow "not specified", so they are combined into one filter
+  const areaConds = loc && area ? [`looking_area.eq."${area}"`, "looking_area.is.null"] : [];
+  const typeConds = type ? ["looking_types.eq.{}", `looking_types.cs.{${type}}`] : [];
+  if (areaConds.length && typeConds.length) {
+    query = query.or(
+      areaConds.flatMap((a) => typeConds.map((t) => `and(${a},${t})`)).join(",")
+    );
+  } else if (areaConds.length || typeConds.length) {
+    query = query.or([...areaConds, ...typeConds].join(","));
+  }
+
+  // Gender: "is_" = the seeker's own gender, "pref_" = wants that gender (or any)
+  if (gMode === "is") {
+    query = query.eq("gender", gValue);
+  } else if (gMode === "pref") {
+    query = query.in("roomie_gender_preference", [gValue, "any"]);
   }
 
   // Hide anyone blocked in either direction
@@ -137,12 +158,29 @@ export default async function PeoplePage({
   const people = (data ?? []) as Person[];
   const total = count ?? people.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const filtered = !!loc;
+  const filtered = !!(loc || gender || type);
+  const where = loc ? lookingText(state, area || null) : "";
+  const summary = [
+    where ? `looking in ${where}` : "",
+    gender
+      ? gMode === "is"
+        ? gValue === "male"
+          ? "male"
+          : "female"
+        : `wanting a ${gValue} housemate (or any)`
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const typeLabel = TYPE_OPTIONS.find((o) => o.value === type)?.label ?? "";
+  const fullSummary = [summary, typeLabel ? `open to ${typeLabel}` : ""].filter(Boolean).join(" · ");
 
   function hrefWith(overrides: { page?: number; sort?: string }) {
     const params = new URLSearchParams();
     if (state) params.set("state", state);
     if (area) params.set("area", area);
+    if (gender) params.set("gender", gender);
+    if (type) params.set("type", type);
     const nextSort = overrides.sort ?? sort;
     if (nextSort !== "recent") params.set("sort", nextSort);
     if (overrides.page && overrides.page > 1) params.set("page", String(overrides.page));
@@ -181,9 +219,17 @@ export default async function PeoplePage({
           </div>
 
           <div className="mt-6">
-            <LocationFilter action="/people" state={state} area={area} sort={sort} />
+            <SearchFilters
+              mode="people"
+              action="/people"
+              state={state}
+              area={area}
+              gender={gender}
+              type={type}
+              sort={sort}
+            />
           </div>
-          {!filtered && nearHref && (
+          {!loc && nearHref && (
             <p className="mt-3 text-sm">
               <Link
                 href={nearHref}
@@ -206,7 +252,7 @@ export default async function PeoplePage({
             <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-medium text-slate-600">
                 {total} {total === 1 ? "seeker" : "seekers"}{" "}
-                {filtered ? "match your search" : "looking at listings right now"}
+                {filtered ? `match your search${fullSummary ? ` (${fullSummary})` : ""}` : "looking at listings right now"}
               </p>
               <SortTabs
                 options={sortOptions}
@@ -231,7 +277,7 @@ export default async function PeoplePage({
                 }
               >
                 {filtered
-                  ? "No one is looking there yet. Try another area, or choose All areas."
+                  ? "No one matches yet. Try another area or gender, or choose Anywhere."
                   : "New people join all the time. Check back soon."}
               </EmptyState>
             ) : (
@@ -280,6 +326,14 @@ export default async function PeoplePage({
                         {p.looking_state && (
                           <p className="mt-3 text-xs font-semibold text-brand-700">
                             📍 Looking in: {lookingText(p.looking_state, p.looking_area)}
+                          </p>
+                        )}
+                        {(p.looking_types ?? []).length > 0 && (
+                          <p className="mt-1 text-xs font-semibold text-brand-700">
+                            🏢 Open to:{" "}
+                            {TYPE_OPTIONS.filter((o) => (p.looking_types ?? []).includes(o.value))
+                              .map((o) => o.label)
+                              .join(", ")}
                           </p>
                         )}
                         <p className="mt-1 text-xs font-semibold text-brand-700">

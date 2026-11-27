@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import LocationFilter from "@/components/LocationFilter";
+import SearchFilters from "@/components/SearchFilters";
 import SaveButton from "@/components/SaveButton";
 import ShowProfileButton from "./ShowProfileButton";
 import { Avatar, EmptyState, SortTabs, activity, isNew, timeAgo } from "@/components/ui";
@@ -109,6 +109,11 @@ export default async function FeedPage({
   const state = loc ? loc.state : "";
   const area = loc && loc.areas.includes(sp.area ?? "") ? (sp.area as string) : "";
   const sort = sortOptions.some((o) => o.value === sp.sort) ? (sp.sort as string) : "recent";
+  const gm = /^(is|pref)_(male|female)$/.exec(sp.gender ?? "");
+  const gender = gm ? (sp.gender as string) : "";
+  const gMode = gm ? gm[1] : "";
+  const gValue = gm ? gm[2] : "";
+  const type = typeLabels[sp.type ?? ""] ? (sp.type as string) : "";
   const page = Math.max(1, parseInt(sp.page ?? "1") || 1);
   const from = (page - 1) * PAGE_SIZE;
   const year = new Date().getFullYear();
@@ -128,6 +133,15 @@ export default async function FeedPage({
 
   if (loc) query = query.eq("state", loc.state);
   if (loc && area) query = query.eq("area", areaText(loc, area));
+
+  // Gender: "pref_" = rooms accepting that gender (or any), "is_" = the host's own gender
+  if (gMode === "pref") {
+    query = query.in("profiles.roomie_gender_preference", [gValue, "any"]);
+  } else if (gMode === "is") {
+    query = query.eq("profiles.gender", gValue);
+  }
+  // Apartment type
+  if (type) query = query.eq("apartment_type", type);
 
   // Sorting uses real timestamps from the database
   if (sort === "oldest") {
@@ -160,12 +174,24 @@ export default async function FeedPage({
 
   const total = count ?? listings.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const filtered = !!loc;
+  const filtered = !!(loc || gender || type);
+  const where = loc ? lookingText(state, area || null) : "";
+  const summary = [
+    where ? `in ${where}` : "",
+    gender
+      ? `${gMode === "pref" ? "accepting" : "hosted by"} ${gValue === "male" ? (gMode === "pref" ? "male roomies" : "a man") : gMode === "pref" ? "female roomies" : "a woman"}`
+      : "",
+    type ? typeLabels[type] : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   function hrefWith(overrides: { page?: number; sort?: string }) {
     const params = new URLSearchParams();
     if (state) params.set("state", state);
     if (area) params.set("area", area);
+    if (gender) params.set("gender", gender);
+    if (type) params.set("type", type);
     const nextSort = overrides.sort ?? sort;
     if (nextSort !== "recent") params.set("sort", nextSort);
     if (overrides.page && overrides.page > 1) params.set("page", String(overrides.page));
@@ -215,13 +241,21 @@ export default async function FeedPage({
           </div>
 
           <div className="mt-6">
-            <LocationFilter action="/feed" state={state} area={area} sort={sort} />
-            {!filtered && me.looking_state && (
+            <SearchFilters
+              mode="feed"
+              action="/feed"
+              state={state}
+              area={area}
+              gender={gender}
+              type={type}
+              sort={sort}
+            />
+            {!loc && me.looking_state && (
   <p className="mt-3 text-sm">
     <Link
       href={`/feed?state=${encodeURIComponent(me.looking_state)}${
         me.looking_area ? `&area=${encodeURIComponent(me.looking_area)}` : ""
-      }`}
+      }${gender ? `&gender=${gender}` : ""}${type ? `&type=${type}` : ""}`}
       className="font-semibold text-brand-700 hover:text-brand-800"
     >
       📍 Show rooms in {lookingText(me.looking_state, me.looking_area)}
@@ -242,7 +276,7 @@ export default async function FeedPage({
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm font-medium text-slate-600">
                 {total} listing{total === 1 ? "" : "s"}{" "}
-                {filtered ? "match your search" : "available right now"}
+                {filtered ? `match your search${summary ? ` (${summary})` : ""}` : "available right now"}
               </p>
               <SortTabs
                 options={sortOptions}
@@ -267,7 +301,7 @@ export default async function FeedPage({
                 }
               >
                 {filtered
-                  ? "Try another area, or choose All areas to see the whole city or town."
+                  ? "Try another area or gender, or choose Anywhere to see the whole city or town."
                   : "New rooms are added all the time. Check back soon."}
               </EmptyState>
             ) : (

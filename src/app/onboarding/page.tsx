@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import LocationSelect from "@/components/LocationSelect";
 import PhotoPicker from "@/components/PhotoPicker";
+import TypePicker from "@/components/TypePicker";
 
 type Status = "owner" | "seeker";
 
@@ -16,6 +17,7 @@ export default function OnboardingPage() {
   const [status, setStatus] = useState<Status | "">("");
   const [lookingState, setLookingState] = useState("");
   const [lookingArea, setLookingArea] = useState("");
+  const [lookingTypes, setLookingTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -76,6 +78,7 @@ export default function OnboardingPage() {
           ? {
               looking_state: lookingState,
               looking_area: lookingArea || null,
+              looking_types: lookingTypes,
             }
           : {}),
       })
@@ -138,6 +141,11 @@ export default function OnboardingPage() {
             }}
             inputClass="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 focus:border-emerald-600 focus:outline-none"
             labelClass="mb-1 block text-sm font-medium text-gray-700"
+          />
+          <TypePicker
+            value={lookingTypes}
+            onChange={setLookingTypes}
+            labelClass="mb-2 block text-sm font-medium text-gray-700"
           />
         </div>
       )}

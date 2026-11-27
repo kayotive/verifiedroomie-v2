@@ -7,6 +7,7 @@ import { checkBio } from "@/lib/bioCheck";
 import { checkPhone } from "@/lib/phoneCheck";
 import LocationSelect from "@/components/LocationSelect";
 import PhotoPicker from "@/components/PhotoPicker";
+import TypePicker from "@/components/TypePicker";
 
 type Initial = {
   fullName: string;
@@ -21,6 +22,7 @@ type Initial = {
   userType: string;
   lookingState: string;
   lookingArea: string;
+  lookingTypes: string[];
 };
 
 const inputClass =
@@ -42,6 +44,7 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
     lookingState: initial.lookingState,
     lookingArea: initial.lookingArea,
   });
+  const [types, setTypes] = useState<string[]>(initial.lookingTypes ?? []);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState(initial.avatarUrl);
   const [loading, setLoading] = useState(false);
@@ -140,6 +143,7 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
           ? {
               looking_state: form.lookingState,
               looking_area: form.lookingArea || null,
+              looking_types: types,
             }
           : {}),
         ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
@@ -262,6 +266,14 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
               setForm({ ...form, lookingState: s, lookingArea: a });
             }}
             inputClass={inputClass}
+            labelClass={labelClass}
+          />
+          <TypePicker
+            value={types}
+            onChange={(v) => {
+              setSaved(false);
+              setTypes(v);
+            }}
             labelClass={labelClass}
           />
         </>

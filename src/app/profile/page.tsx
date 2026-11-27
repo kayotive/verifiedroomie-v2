@@ -8,6 +8,7 @@ import ProfileForm from "./ProfileForm";
 import DeleteAccount from "./DeleteAccount";
 import PauseProfile from "./PauseProfile";
 import { lookingText } from "@/lib/locations";
+import { TYPE_OPTIONS } from "@/components/TypePicker";
 
 const genderLabels: Record<string, string> = { male: "Male", female: "Female", other: "Other" };
 const occupationLabels: Record<string, string> = {
@@ -29,7 +30,7 @@ export default async function ProfilePage() {
   const { data: p } = await supabase
     .from("profiles")
     .select(
-       "full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, looking_state, looking_area, is_paused, paused_reason, user_type, id_verified, phone_verified, is_admin, photo_status"
+       "full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, looking_state, looking_area, looking_types, is_paused, paused_reason, user_type, id_verified, phone_verified, is_admin, photo_status"
     )
     .eq("id", user.id)
     .single();
@@ -100,6 +101,16 @@ export default async function ProfilePage() {
     📍 Looking in: {lookingText(p.looking_state, p.looking_area)}
   </p>
 )}
+{p.user_type === "seeker" && (
+  <p className="mt-1 text-sm font-medium text-gray-800">
+    🏢 Apartment type:{" "}
+    {(p.looking_types ?? []).length
+      ? TYPE_OPTIONS.filter((o) => (p.looking_types ?? []).includes(o.value))
+          .map((o) => o.label)
+          .join(", ")
+      : "Any"}
+  </p>
+)}
 <div className="mt-3 flex flex-wrap gap-1">
           {badges.map((b) => (
             <span key={b} className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
@@ -126,6 +137,7 @@ export default async function ProfilePage() {
            userType: p.user_type ?? "",
 lookingState: p.looking_state ?? "",
 lookingArea: p.looking_area ?? "",
+lookingTypes: p.looking_types ?? [],
           avatarUrl: p.avatar_url ?? "",
         }}
       />
