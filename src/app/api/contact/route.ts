@@ -8,6 +8,7 @@ const FROM = "VerifiedRoomie <noreply@verifiedroomie.com>";
 const CONTACT_TOPICS: Record<string, string> = {
   account: "Account",
   verification: "Verification",
+  appeal: "Appeal a suspension",
   report: "Report a problem",
   other: "Other",
 };

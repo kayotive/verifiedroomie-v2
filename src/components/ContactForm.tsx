@@ -5,6 +5,7 @@ import { useState } from "react";
 const topics = [
   { value: "account", label: "Account" },
   { value: "verification", label: "Verification" },
+  { value: "appeal", label: "Appeal a suspension" },
   { value: "report", label: "Report a problem" },
   { value: "other", label: "Other" },
 ];
@@ -16,13 +17,15 @@ const labelClass = "mb-1 block text-sm font-medium text-slate-700";
 export default function ContactForm({
   defaultName,
   defaultEmail,
+  defaultTopic = "account",
 }: {
   defaultName: string;
   defaultEmail: string;
+  defaultTopic?: string;
 }) {
   const [name, setName] = useState(defaultName);
   const [email, setEmail] = useState(defaultEmail);
-  const [topic, setTopic] = useState("account");
+  const [topic, setTopic] = useState(topics.some((t) => t.value === defaultTopic) ? defaultTopic : "account");
   const [message, setMessage] = useState("");
   const [website, setWebsite] = useState(""); // hidden field for bots
   const [loading, setLoading] = useState(false);

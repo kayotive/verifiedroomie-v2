@@ -9,7 +9,12 @@ export const metadata: Metadata = {
   description: "Send a message to the VerifiedRoomie team.",
 };
 
-export default async function ContactPage() {
+export default async function ContactPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  const sp = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -39,7 +44,7 @@ export default async function ContactPage() {
       </p>
 
       <div className="relative mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <ContactForm defaultName={defaultName} defaultEmail={user?.email ?? ""} />
+        <ContactForm defaultName={defaultName} defaultEmail={user?.email ?? ""} defaultTopic={sp.topic} />
       </div>
 
       <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-5">
