@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+const inputClass =
+  "w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-emerald-600 focus:outline-none";
+
 export function ReportActions({
   reportId,
   reportedUserId,
@@ -13,12 +16,19 @@ export function ReportActions({
 }) {
   const router = useRouter();
   const [note, setNote] = useState("");
+  const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   async function act(kind: "dismissed" | "resolved" | "suspend") {
-    setLoading(true);
     setError("");
+
+    if (kind === "suspend" && reason.trim().length < 5) {
+      setError("Write the reason the person will see (at least 5 characters) before suspending.");
+      return;
+    }
+
+    setLoading(true);
     const supabase = createClient();
 
     if (kind === "suspend") {
@@ -29,6 +39,16 @@ export function ReportActions({
       if (error) {
         setLoading(false);
         setError(error.message);
+        return;
+      }
+      // Save the reason the suspended person will see
+      const { error: reasonError } = await supabase.rpc("set_suspension_reason", {
+        p_user: reportedUserId,
+        p_reason: reason.trim(),
+      });
+      if (reasonError) {
+        setLoading(false);
+        setError(`Suspended, but the reason was not saved: ${reasonError.message}`);
         return;
       }
     }
@@ -48,12 +68,30 @@ export function ReportActions({
 
   return (
     <div className="mt-3 flex flex-col gap-2">
-      <input
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        placeholder="Internal note (optional)"
-        className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-emerald-600 focus:outline-none"
-      />
+      <div>
+        <label className="mb-1 block text-xs font-semibold text-red-700">
+          Reason shown to the person if you suspend them
+        </label>
+        <textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          rows={2}
+          maxLength={500}
+          placeholder="Plain words so they know what to answer. Do not name the reporter."
+          className={inputClass}
+        />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-semibold text-gray-600">
+          Internal note (private, never shown)
+        </label>
+        <input
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Optional"
+          className={inputClass}
+        />
+      </div>
       <div className="flex gap-2">
         <button onClick={() => act("dismissed")} disabled={loading} className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60">
           Dismiss

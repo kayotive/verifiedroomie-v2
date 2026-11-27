@@ -18,15 +18,17 @@ export default function ContactForm({
   defaultName,
   defaultEmail,
   defaultTopic = "account",
+  defaultMessage = "",
 }: {
   defaultName: string;
   defaultEmail: string;
   defaultTopic?: string;
+  defaultMessage?: string;
 }) {
   const [name, setName] = useState(defaultName);
   const [email, setEmail] = useState(defaultEmail);
   const [topic, setTopic] = useState(topics.some((t) => t.value === defaultTopic) ? defaultTopic : "account");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(defaultMessage);
   const [website, setWebsite] = useState(""); // hidden field for bots
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

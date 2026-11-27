@@ -21,7 +21,7 @@ type ReportRow = {
   reporter: { full_name: string };
   reported: { full_name: string; is_suspended: boolean };
 };
-type Suspended = { id: string; full_name: string };
+type Suspended = { id: string; full_name: string; suspended_reason: string | null };
 
 export default async function AdminReportsPage() {
   const supabase = await createClient();
@@ -50,7 +50,7 @@ export default async function AdminReportsPage() {
 
   const { data: suspendedRows } = await supabase
     .from("profiles")
-    .select("id, full_name")
+    .select("id, full_name, suspended_reason")
     .eq("is_suspended", true);
   const suspended = (suspendedRows ?? []) as Suspended[];
 
@@ -92,8 +92,16 @@ export default async function AdminReportsPage() {
       ) : (
         <ul className="flex flex-col gap-2">
           {suspended.map((s) => (
-            <li key={s.id} className="flex items-center justify-between rounded-2xl border border-gray-200 p-3">
-              <p className="font-semibold text-gray-900">{s.full_name || "User"}</p>
+            <li key={s.id} className="flex items-start justify-between gap-3 rounded-2xl border border-gray-200 p-3">
+              <div className="min-w-0">
+                <p className="font-semibold text-gray-900">{s.full_name || "User"}</p>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  Shown to them:{" "}
+                  {s.suspended_reason === "photo"
+                    ? "Profile photo did not follow our rules"
+                    : s.suspended_reason || "Default message (no reason saved)"}
+                </p>
+              </div>
               <ReinstateButton userId={s.id} />
             </li>
           ))}

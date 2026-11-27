@@ -21,9 +21,23 @@ export default async function ContactPage({
   } = await supabase.auth.getUser();
 
   let defaultName = "";
+  let defaultMessage = "";
   if (user) {
-    const { data: p } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+    const { data: p } = await supabase
+      .from("profiles")
+      .select("full_name, is_suspended, suspended_reason")
+      .eq("id", user.id)
+      .single();
     defaultName = p?.full_name ?? "";
+
+    // Appeal: start the message with the reason they were given
+    if (sp.topic === "appeal" && p?.is_suspended) {
+      const why =
+        p.suspended_reason === "photo"
+          ? "my profile photo did not follow the rules"
+          : p.suspended_reason?.trim() || "a report was being reviewed";
+      defaultMessage = `I am appealing my suspension.\n\nReason I was given: ${why}\n\nMy side of the story:\n`;
+    }
   }
 
   return (
@@ -44,7 +58,7 @@ export default async function ContactPage({
       </p>
 
       <div className="relative mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <ContactForm defaultName={defaultName} defaultEmail={user?.email ?? ""} defaultTopic={sp.topic} />
+        <ContactForm defaultName={defaultName} defaultEmail={user?.email ?? ""} defaultTopic={sp.topic} defaultMessage={defaultMessage} />
       </div>
 
       <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-5">
