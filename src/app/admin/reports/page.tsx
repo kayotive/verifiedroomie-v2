@@ -48,6 +48,15 @@ export default async function AdminReportsPage() {
     .order("created_at", { ascending: true });
   const reports = (data ?? []) as unknown as ReportRow[];
 
+  // One card per reported person, with all their open reports inside
+  const groups = new Map<string, ReportRow[]>();
+  for (const r of reports) {
+    const list = groups.get(r.reported_user_id) ?? [];
+    list.push(r);
+    groups.set(r.reported_user_id, list);
+  }
+  const grouped = Array.from(groups.entries());
+
   const { data: suspendedRows } = await supabase
     .from("profiles")
     .select("id, full_name, suspended_reason")
@@ -61,28 +70,59 @@ export default async function AdminReportsPage() {
       </Link>
       <h1 className="mb-4 mt-2 text-2xl font-bold text-gray-900">Admin: reports</h1>
 
-      <h2 className="mb-2 font-semibold text-gray-900">Open reports ({reports.length})</h2>
-      {reports.length === 0 ? (
+      <h2 className="mb-2 font-semibold text-gray-900">
+        Open reports ({reports.length}) · {grouped.length} {grouped.length === 1 ? "person" : "people"}
+      </h2>
+      {grouped.length === 0 ? (
         <p className="mb-6 text-sm text-gray-500">No open reports.</p>
       ) : (
         <ul className="mb-6 flex flex-col gap-4">
-          {reports.map((r) => (
-            <li key={r.id} className="rounded-2xl border border-gray-200 p-3">
-              <p className="font-semibold text-gray-900">{typeLabels[r.type]}</p>
-              <p className="text-sm text-gray-600">
-                Reported: <strong>{r.reported?.full_name || "User"}</strong>
-                {r.reported?.is_suspended ? " (suspended)" : ""} · by{" "}
-                {r.reporter?.full_name || "User"}
-              </p>
-              {r.details && <p className="mt-2 whitespace-pre-line text-sm text-gray-700">{r.details}</p>}
-              {r.listing_id && (
-                <Link href={`/listings/${r.listing_id}`} className="mt-2 inline-block text-sm font-semibold text-emerald-700">
-                  Open listing →
-                </Link>
-              )}
-              <ReportActions reportId={r.id} reportedUserId={r.reported_user_id} />
-            </li>
-          ))}
+          {grouped.map(([userId, list]) => {
+            const first = list[0];
+            return (
+              <li key={userId} className="rounded-2xl border border-gray-200 p-3">
+                <p className="text-lg font-bold text-gray-900">
+                  {first.reported?.full_name || "User"}
+                  {first.reported?.is_suspended ? (
+                    <span className="ml-2 text-sm font-semibold text-red-700">(suspended)</span>
+                  ) : null}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {list.length} open report{list.length === 1 ? "" : "s"}
+                </p>
+
+                <ul className="mt-3 flex flex-col gap-3">
+                  {list.map((r) => (
+                    <li key={r.id} className="rounded-xl bg-gray-50 p-3">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {typeLabels[r.type]}{" "}
+                        <span className="font-normal text-gray-500">
+                          · by {r.reporter?.full_name || "User"}
+                        </span>
+                      </p>
+                      {r.details && (
+                        <p className="mt-1 whitespace-pre-line text-sm text-gray-700">{r.details}</p>
+                      )}
+                      {r.listing_id && (
+                        <Link
+                          href={`/listings/${r.listing_id}`}
+                          className="mt-1 inline-block text-sm font-semibold text-emerald-700"
+                        >
+                          Open listing →
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+
+                <ReportActions
+                  reportIds={list.map((r) => r.id)}
+                  reportedUserId={userId}
+                  alreadySuspended={!!first.reported?.is_suspended}
+                />
+              </li>
+            );
+          })}
         </ul>
       )}
 

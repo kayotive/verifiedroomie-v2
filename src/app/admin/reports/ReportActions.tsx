@@ -8,17 +8,33 @@ const inputClass =
   "w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-emerald-600 focus:outline-none";
 
 export function ReportActions({
-  reportId,
+  reportIds,
   reportedUserId,
+  alreadySuspended,
 }: {
-  reportId: string;
+  reportIds: string[];
   reportedUserId: string;
+  alreadySuspended: boolean;
 }) {
   const router = useRouter();
   const [note, setNote] = useState("");
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Closes every open report on this person in one go
+  async function closeAll(status: "dismissed" | "resolved") {
+    const supabase = createClient();
+    for (const id of reportIds) {
+      const { error } = await supabase.rpc("resolve_report", {
+        p_id: id,
+        p_status: status,
+        p_note: note.trim() || null,
+      });
+      if (error) return error.message;
+    }
+    return null;
+  }
 
   async function act(kind: "dismissed" | "resolved" | "suspend") {
     setError("");
@@ -53,14 +69,10 @@ export function ReportActions({
       }
     }
 
-    const { error } = await supabase.rpc("resolve_report", {
-      p_id: reportId,
-      p_status: kind === "dismissed" ? "dismissed" : "resolved",
-      p_note: note.trim() || null,
-    });
+    const closeError = await closeAll(kind === "dismissed" ? "dismissed" : "resolved");
     setLoading(false);
-    if (error) {
-      setError(error.message);
+    if (closeError) {
+      setError(closeError);
       return;
     }
     router.refresh();
@@ -68,19 +80,25 @@ export function ReportActions({
 
   return (
     <div className="mt-3 flex flex-col gap-2">
-      <div>
-        <label className="mb-1 block text-xs font-semibold text-red-700">
-          Reason shown to the person if you suspend them
-        </label>
-        <textarea
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          rows={2}
-          maxLength={500}
-          placeholder="Plain words so they know what to answer. Do not name the reporter."
-          className={inputClass}
-        />
-      </div>
+      {alreadySuspended ? (
+        <p className="rounded-xl bg-amber-50 p-2 text-xs text-amber-900">
+          This person is already suspended. You can close these reports below.
+        </p>
+      ) : (
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-red-700">
+            Reason shown to the person if you suspend them
+          </label>
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={2}
+            maxLength={500}
+            placeholder="Plain words so they know what to answer. Do not name the reporter."
+            className={inputClass}
+          />
+        </div>
+      )}
       <div>
         <label className="mb-1 block text-xs font-semibold text-gray-600">
           Internal note (private, never shown)
@@ -94,14 +112,16 @@ export function ReportActions({
       </div>
       <div className="flex gap-2">
         <button onClick={() => act("dismissed")} disabled={loading} className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60">
-          Dismiss
+          Dismiss{reportIds.length > 1 ? " all" : ""}
         </button>
         <button onClick={() => act("resolved")} disabled={loading} className="flex-1 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
-          Resolve
+          Resolve{reportIds.length > 1 ? " all" : ""}
         </button>
-        <button onClick={() => act("suspend")} disabled={loading} className="flex-1 rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60">
-          Suspend user
-        </button>
+        {!alreadySuspended && (
+          <button onClick={() => act("suspend")} disabled={loading} className="flex-1 rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60">
+            Suspend user
+          </button>
+        )}
       </div>
       {error && <p className="text-sm text-red-700">{error}</p>}
     </div>
