@@ -95,19 +95,24 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
       return;
     }
 
+    // Only check the number when it was actually changed
+    const phoneChanged = phoneCheck.phone !== initial.phone;
+
     setLoading(true);
-    const { data: taken, error: phoneErr } = await supabase.rpc("phone_exists", {
-      p_phone: phoneCheck.phone,
-    });
-    if (phoneErr) {
-      setLoading(false);
-      setError("Could not check the phone number. Please try again.");
-      return;
-    }
-    if (taken) {
-      setLoading(false);
-      setError("Phone number already exists. If this is your number, please contact support.");
-      return;
+    if (phoneChanged) {
+      const { data: taken, error: phoneErr } = await supabase.rpc("phone_exists", {
+        p_phone: phoneCheck.phone,
+      });
+      if (phoneErr) {
+        setLoading(false);
+        setError("Could not check the phone number. Please try again.");
+        return;
+      }
+      if (taken) {
+        setLoading(false);
+        setError("Phone number already exists. If this is your number, please contact support.");
+        return;
+      }
     }
     const {
       data: { user },
@@ -156,10 +161,12 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
       return;
     }
 
-    const { error: phoneError } = await supabase
-      .from("private_details")
-      .update({ phone: phoneCheck.phone })
-      .eq("id", user.id);
+    const { error: phoneError } = phoneChanged
+      ? await supabase
+          .from("private_details")
+          .update({ phone: phoneCheck.phone })
+          .eq("id", user.id)
+      : { error: null };
 
     setLoading(false);
     if (phoneError) {
