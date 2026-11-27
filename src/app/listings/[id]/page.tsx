@@ -70,6 +70,7 @@ last_confirmed_at: string;
     id_verified: boolean;
     phone_verified: boolean;
     photo_status: string;
+    is_suspended: boolean;
   };
   listing_media: Media[];
 };
@@ -95,7 +96,7 @@ export default async function ListingDetailsPage({
     .select(
       `id, owner_id, room_available, apartment_type, contribution_amount, hidden_reason, last_confirmed_at, move_in_date, description,
        house_rules, place_name, area, latitude, longitude, apartment_verified,
-       profiles!inner(full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, id_verified, phone_verified, photo_status),
+       profiles!inner(full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, id_verified, phone_verified, photo_status, is_suspended),
        listing_media(path, category, kind)`
     )
     .eq("id", id)
@@ -107,14 +108,16 @@ export default async function ListingDetailsPage({
 
   const { data: myProfile } = await supabase
     .from("profiles")
-     .select("user_type, connect_points, is_paused, paused_reason")
+     .select("user_type, connect_points, is_paused, paused_reason, is_admin")
     .eq("id", user.id)
     .single();
 
   const isMine = l.owner_id === user.id;
   const notConfirmedForTooLong =
      new Date(l.last_confirmed_at).getTime() < Date.now() - 30 * 24 * 60 * 60 * 1000;
-   if (!isMine && (!l.room_available || notConfirmedForTooLong)) {
+   // A suspended owner's listing is hidden from everyone except admins
+   const hiddenBySuspension = !isMine && p.is_suspended && !myProfile?.is_admin;
+   if (hiddenBySuspension || (!isMine && (!l.room_available || notConfirmedForTooLong))) {
      return (
        <main className="mx-auto max-w-md px-4 py-10 text-center">
          <p className="text-4xl" aria-hidden="true">🔒</p>
