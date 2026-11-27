@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AvatarZoom from "@/components/AvatarZoom";
@@ -91,6 +90,25 @@ export default async function ListingDetailsPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // One friendly screen for every case where the listing can't be shown
+  // (removed by the owner, hidden, taken, or not available right now)
+  const unavailable = (
+    <main className="mx-auto max-w-md px-4 py-10 text-center">
+      <p className="text-4xl" aria-hidden="true">🔒</p>
+      <h1 className="mt-3 text-2xl font-bold text-gray-900">This listing isn&apos;t available right now</h1>
+      <p className="mt-2 text-gray-600">
+        It may have been removed, taken, or is not available at the moment. Saved listings that are still
+        available stay in your Saved tab.
+      </p>
+      <Link
+        href="/feed"
+        className="mt-5 inline-block rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white hover:bg-emerald-700"
+      >
+        Browse listings
+      </Link>
+    </main>
+  );
+
   const { data } = await supabase
     .from("listings")
     .select(
@@ -102,7 +120,7 @@ export default async function ListingDetailsPage({
     .eq("id", id)
     .maybeSingle();
 
-  if (!data) notFound();
+  if (!data) return unavailable;
   const l = data as unknown as Detail;
   const p = l.profiles;
 
@@ -118,21 +136,7 @@ export default async function ListingDetailsPage({
    // A suspended owner's listing is hidden from everyone except admins
    const hiddenBySuspension = !isMine && p.is_suspended && !myProfile?.is_admin;
    if (hiddenBySuspension || (!isMine && (!l.room_available || notConfirmedForTooLong))) {
-     return (
-       <main className="mx-auto max-w-md px-4 py-10 text-center">
-         <p className="text-4xl" aria-hidden="true">🔒</p>
-         <h1 className="mt-3 text-2xl font-bold text-gray-900">This listing isn&apos;t available</h1>
-         <p className="mt-2 text-gray-600">
-           The owner has hidden it or it has been taken. If you saved it, you&apos;ll find it in your saved listings.
-         </p>
-         <Link
-           href="/feed"
-           className="mt-5 inline-block rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white hover:bg-emerald-700"
-         >
-           Browse listings
-         </Link>
-       </main>
-     );
+     return unavailable;
    }
   const { data: savedRow } = await supabase
      .from("saved_listings")
