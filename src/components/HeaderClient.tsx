@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { goOffline } from "@/lib/presence";
 import Logo from "./Logo";
 import { ChevronDownIcon, MenuIcon, XIcon } from "./icons";
 
@@ -56,7 +57,9 @@ export default function HeaderClient({ viewer }: { viewer: Viewer | null }) {
   };
 
   async function logout() {
-    await createClient().auth.signOut();
+    const supabase = createClient();
+    await goOffline(supabase);
+    await supabase.auth.signOut();
     close();
     router.push("/");
     router.refresh();

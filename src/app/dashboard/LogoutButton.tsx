@@ -2,12 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { goOffline } from "@/lib/presence";
 
 export default function LogoutButton() {
   const router = useRouter();
 
   async function logout() {
-    await createClient().auth.signOut();
+    const supabase = createClient();
+    await goOffline(supabase);
+    await supabase.auth.signOut();
     router.push("/");
     router.refresh();
   }
