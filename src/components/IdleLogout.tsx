@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { goOffline } from "@/lib/presence";
 
 const IDLE_MS = 3 * 60 * 1000; // log out after 3 minutes of no activity
 const WARN_MS = 30 * 1000; // show a warning for the last 30 seconds
@@ -97,6 +98,8 @@ export default function IdleLogout() {
     const logout = async () => {
       if (done) return;
       done = true;
+      // Show as offline straight away, before the session is removed
+      await goOffline(supabase);
       try {
         await supabase.auth.signOut();
       } catch {

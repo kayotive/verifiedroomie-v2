@@ -148,7 +148,7 @@ export function isNew(iso: string, days = 7) {
 export function activity(iso: string | null | undefined) {
   if (!iso) return null;
   const minutes = (Date.now() - new Date(iso).getTime()) / 60000;
-  if (minutes < 5) return { label: "Online now", recent: true, level: "online" as const };
+  if (minutes < 2) return { label: "Online now", recent: true, level: "online" as const };
   if (minutes < 60)
     return {
       label: `Active ${Math.max(1, Math.floor(minutes))} min ago`,
@@ -161,7 +161,7 @@ export function activity(iso: string | null | undefined) {
   return null;
 }
 
-/** Small status signal: green = online now, amber = active in the last hour, grey = older. */
+/** Small status signal: green = online now (last 2 minutes), amber = active in the last hour, grey = older. */
 export function ActivityBadge({
   iso,
   className = "text-xs text-slate-500",
