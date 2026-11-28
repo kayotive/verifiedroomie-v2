@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const TO = "askverifiedroomie@gmail.com";
 const FROM = "VerifiedRoomie <noreply@verifiedroomie.com>";
+const DAILY_EMAIL_CAP = 30; // contact/feedback emails per day
 
 const CONTACT_TOPICS: Record<string, string> = {
   account: "Account",
@@ -88,18 +89,49 @@ export async function POST(request: Request) {
   }
   const admin = createAdmin(url, serviceKey, { auth: { persistSession: false } });
 
-  // Simple spam protection: at most 5 messages per hour from the same connection
+  // Spam protection. Each check counts messages already saved in the last hour.
+  const sinceHour = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const tooMany = () =>
+    bad("You have sent several messages already. Please try again in an hour.", 429);
+
+  // 1. At most 5 per hour from the same connection
   if (ip) {
-    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { count } = await admin
       .from("messages")
       .select("id", { count: "exact", head: true })
       .eq("ip", ip)
-      .gte("created_at", since);
-    if ((count ?? 0) >= 5) {
-      return bad("You have sent several messages already. Please try again later.", 429);
-    }
+      .gte("created_at", sinceHour);
+    if ((count ?? 0) >= 5) return tooMany();
   }
+
+  // 2. At most 5 per hour for the same email address (stops one person changing connection)
+  if (email) {
+    const { count } = await admin
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .ilike("email", email)
+      .gte("created_at", sinceHour);
+    if ((count ?? 0) >= 5) return tooMany();
+  }
+
+  // 3. At most 10 per hour for the same logged-in account
+  if (user) {
+    const { count } = await admin
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("created_at", sinceHour);
+    if ((count ?? 0) >= 10) return tooMany();
+  }
+
+  // 4. Daily cap on emails sent to the team, so a flood cannot use up the Resend allowance.
+  //    The message is always saved; only the email is skipped once the cap is reached.
+  const sinceDay = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { count: todayCount } = await admin
+    .from("messages")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", sinceDay);
+  const emailAllowed = (todayCount ?? 0) < DAILY_EMAIL_CAP;
 
   const { error: insertError } = await admin.from("messages").insert({
     kind,
@@ -119,7 +151,8 @@ export async function POST(request: Request) {
 
   // Email the team. The message is already saved, so a failed email does not lose it.
   const apiKey = process.env.RESEND_API_KEY;
-  if (apiKey) {
+  if (!emailAllowed) console.warn("contact: daily email cap reached, message saved without email");
+  if (apiKey && emailAllowed) {
     const label = kind === "feedback" ? "Feedback" : "Contact";
     const rows: [string, string][] = [
       ["From", `${esc(name || "Unknown")}${email ? ` &lt;${esc(email)}&gt;` : ""}`],
