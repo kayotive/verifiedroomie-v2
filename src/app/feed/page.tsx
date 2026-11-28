@@ -258,7 +258,10 @@ export default async function FeedPage({
       }${gender ? `&gender=${gender}` : ""}${type ? `&type=${type}` : ""}`}
       className="font-semibold text-brand-700 hover:text-brand-800"
     >
-      📍 Show rooms in {lookingText(me.looking_state, me.looking_area)}
+      📍 Show owners&apos; listings in{" "}
+      {me.looking_area || /^(anywhere|all|any)\b/i.test(lookingText(me.looking_state, null))
+        ? lookingText(me.looking_state, me.looking_area)
+        : `anywhere in ${lookingText(me.looking_state, null)}`}
     </Link>
   </p>
 )}
