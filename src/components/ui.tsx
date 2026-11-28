@@ -147,11 +147,49 @@ export function isNew(iso: string, days = 7) {
  */
 export function activity(iso: string | null | undefined) {
   if (!iso) return null;
-  const hours = (Date.now() - new Date(iso).getTime()) / 3600000;
-  if (hours < 1) return { label: "Active in the last hour", recent: true };
-  if (hours < 24) return { label: "Active today", recent: true };
-  if (hours < 24 * 7) return { label: "Active this week", recent: false };
+  const minutes = (Date.now() - new Date(iso).getTime()) / 60000;
+  if (minutes < 5) return { label: "Online now", recent: true, level: "online" as const };
+  if (minutes < 60)
+    return {
+      label: `Active ${Math.max(1, Math.floor(minutes))} min ago`,
+      recent: true,
+      level: "recent" as const,
+    };
+  const hours = minutes / 60;
+  if (hours < 24) return { label: "Active today", recent: true, level: "today" as const };
+  if (hours < 24 * 7) return { label: "Active this week", recent: false, level: "week" as const };
   return null;
+}
+
+/** Small status signal: green = online now, amber = active in the last hour, grey = older. */
+export function ActivityBadge({
+  iso,
+  className = "text-xs text-slate-500",
+}: {
+  iso: string | null | undefined;
+  className?: string;
+}) {
+  const act = activity(iso);
+  if (!act) return null;
+  const dot =
+    act.level === "online"
+      ? "bg-green-500"
+      : act.level === "recent"
+        ? "bg-amber-400"
+        : "bg-slate-300";
+  return (
+    <span className={`inline-flex items-center gap-1.5 ${className}`}>
+      <span className="relative flex h-2 w-2">
+        {act.level === "online" && (
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-60" />
+        )}
+        <span className={`relative inline-flex h-2 w-2 rounded-full ${dot}`} />
+      </span>
+      <span className={act.level === "online" ? "font-semibold text-green-700" : ""}>
+        {act.label}
+      </span>
+    </span>
+  );
 }
 
 /** Sort choices shown as a small switch above the results. */

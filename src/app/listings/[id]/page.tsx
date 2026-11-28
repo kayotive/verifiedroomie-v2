@@ -9,7 +9,7 @@ import ConnectButton from "./ConnectButton";
  import SaveButton from "@/components/SaveButton";
 import OwnerListingControls from "./OwnerListingControls";
 import ReportBlock from "@/components/ReportBlock";
-import { timeAgo } from "@/components/ui";
+import { ActivityBadge, timeAgo } from "@/components/ui";
 import PhotoGallery from "./PhotoGallery";
 
 const typeLabels: Record<string, string> = {
@@ -49,6 +49,7 @@ type Detail = {
   move_in_date: string | null;
   hidden_reason: string | null;
 last_confirmed_at: string;
+  last_active_at: string | null;
   description: string | null;
   house_rules: string | null;
   place_name: string | null;
@@ -112,7 +113,7 @@ export default async function ListingDetailsPage({
   const { data } = await supabase
     .from("listings")
     .select(
-      `id, owner_id, room_available, apartment_type, contribution_amount, hidden_reason, last_confirmed_at, move_in_date, description,
+      `id, owner_id, room_available, apartment_type, contribution_amount, hidden_reason, last_confirmed_at, last_active_at, move_in_date, description,
        house_rules, place_name, area, latitude, longitude, apartment_verified,
        profiles!inner(full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, id_verified, phone_verified, photo_status, is_suspended),
        listing_media(path, category, kind)`
@@ -261,6 +262,11 @@ export default async function ListingDetailsPage({
           <p className="mt-1 text-sm font-medium text-gray-800">
   🏠 Looking for: {prefLabels[p.roomie_gender_preference ?? "any"]}
 </p>
+{!isMine && (
+  <p className="mt-1">
+    <ActivityBadge iso={l.last_active_at} className="text-xs text-gray-600" />
+  </p>
+)}
 <div className="mt-1 flex flex-wrap gap-1">
             {badges.map((b) => (
               <span key={b} className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">

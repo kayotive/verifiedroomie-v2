@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import IdleLogout from "@/components/IdleLogout";
+import PresenceHeartbeat from "@/components/PresenceHeartbeat";
 import { SITE_URL } from "@/lib/site";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-white font-sans text-slate-900 antialiased">
         <SiteHeader />
         <IdleLogout />
+        <PresenceHeartbeat />
         {children}
       </body>
     </html>

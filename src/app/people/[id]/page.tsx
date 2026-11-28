@@ -7,6 +7,7 @@ import { whatsappLink } from "@/lib/phone";
 import ConnectButton from "../../listings/[id]/ConnectButton";
 import ReportBlock from "@/components/ReportBlock";
 import { lookingText } from "@/lib/locations";
+import { ActivityBadge } from "@/components/ui";
 import { TYPE_OPTIONS } from "@/lib/apartmentTypes";
 
 const genderLabels: Record<string, string> = { male: "Male", female: "Female", other: "Other" };
@@ -42,7 +43,7 @@ export default async function PersonPage({
   const { data: person } = await supabase
     .from("profiles")
     .select(
-      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, looking_state, looking_area, looking_types, id_verified, phone_verified, user_type, is_suspended, is_paused, photo_status"
+      "id, full_name, gender, birth_year, occupation, religion, smoking, avatar_url, bio, roomie_gender_preference, looking_state, looking_area, looking_types, id_verified, phone_verified, user_type, is_suspended, is_paused, photo_status, last_active_at"
     )
     .eq("id", id)
     .maybeSingle();
@@ -113,7 +114,10 @@ export default async function PersonPage({
           {person.religion ?? ""}
           {person.smoking ? ` · ${smokingLabels[person.smoking]}` : ""}
         </p>
-        <p className="mt-2 text-sm font-medium text-gray-800">
+        <p className="mt-2">
+          <ActivityBadge iso={person.last_active_at} className="text-sm text-gray-600" />
+        </p>
+        <p className="mt-1 text-sm font-medium text-gray-800">
   🏠 Looking for: {prefLabels[person.roomie_gender_preference ?? "any"]}
 </p>
 {person.looking_state && (

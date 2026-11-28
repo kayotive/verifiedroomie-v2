@@ -1,8 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Record "last active" at most once every 10 minutes per person
-const ACTIVE_REFRESH_MS = 10 * 60 * 1000;
+// Record "last active" at most once every 2 minutes per person (drives the green "online" dot)
+const ACTIVE_REFRESH_MS = 2 * 60 * 1000;
 
 // If the person has been away longer than this (same 3 minutes as the idle logout,
 // plus 1 minute of safety for phone clocks), they are signed out when they come back.

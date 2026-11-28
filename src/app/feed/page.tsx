@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import SearchFilters from "@/components/SearchFilters";
 import SaveButton from "@/components/SaveButton";
 import ShowProfileButton from "./ShowProfileButton";
-import { Avatar, EmptyState, SortTabs, activity, isNew, timeAgo } from "@/components/ui";
+import { Avatar, EmptyState, SortTabs, ActivityBadge, isNew, timeAgo } from "@/components/ui";
 import {
   HomeIcon,
   MapPinIcon,
@@ -320,7 +320,6 @@ export default async function FeedPage({
                   const p = l.profiles;
                   const age = p.birth_year ? year - p.birth_year : null;
                   const firstName = p.full_name.split(" ")[0] || "Host";
-                  const act = activity(l.last_active_at);
                   const moveIn = moveInLabel(l.move_in_date);
 
                   return (
@@ -378,16 +377,7 @@ export default async function FeedPage({
                           </p>
                           <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-500">
                             <span>{moveIn}</span>
-                            {act && (
-                              <span className="inline-flex items-center gap-1">
-                                <span
-                                  className={`h-1.5 w-1.5 rounded-full ${
-                                    act.recent ? "bg-green-500" : "bg-slate-300"
-                                  }`}
-                                />
-                                {act.label}
-                              </span>
-                            )}
+                            <ActivityBadge iso={l.last_active_at} />
                           </div>
 
                           <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-4">

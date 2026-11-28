@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SearchFilters from "@/components/SearchFilters";
-import { Avatar, EmptyState, Pill, SortTabs, activity, isNew, timeAgo } from "@/components/ui";
+import { Avatar, EmptyState, Pill, SortTabs, ActivityBadge, isNew, timeAgo } from "@/components/ui";
 import { ShieldCheckIcon, UsersIcon } from "@/components/icons";
 import PhotoVerifiedBadge from "@/components/PhotoVerifiedBadge";
 import { LOCATIONS, lookingText } from "@/lib/locations";
@@ -285,7 +285,6 @@ export default async function PeoplePage({
                 {people.map((p) => {
                   const age = p.birth_year ? year - p.birth_year : null;
                   const firstName = p.full_name.split(" ")[0] || "New member";
-                  const act = activity(p.last_active_at);
 
                   return (
                     <li key={p.id}>
@@ -357,16 +356,7 @@ export default async function PeoplePage({
                         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-sm">
                           <span className="flex flex-col text-slate-500">
                             <span>Joined {timeAgo(p.created_at)}</span>
-                            {act && (
-                              <span className="inline-flex items-center gap-1 text-xs">
-                                <span
-                                  className={`h-1.5 w-1.5 rounded-full ${
-                                    act.recent ? "bg-green-500" : "bg-slate-300"
-                                  }`}
-                                />
-                                {act.label}
-                              </span>
-                            )}
+                            <ActivityBadge iso={p.last_active_at} />
                           </span>
                           <span className="font-semibold text-brand-700 transition group-hover:translate-x-0.5">
                             View profile →
